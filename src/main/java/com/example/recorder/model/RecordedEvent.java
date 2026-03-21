@@ -20,7 +20,7 @@ public class RecordedEvent {
     }
 
     public RecordedEvent(String type, String text, String value, String id, String name, String url) {
-        this(type, text, value, id, name, url, null, null, null);
+        this(type, text, value, id, name, url, null, null, null, null);
     }
 
     public RecordedEvent(String type, String text, String value, String id, String name, String url,
