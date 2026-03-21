@@ -13,18 +13,18 @@ async function getActiveTab() {
 function render(state, tabId) {
   backendInput.value = state.backendUrl;
   const pickerEnabled = !!state.pickerEnabledTabs?.[tabId];
-  toggleButton.textContent = pickerEnabled ? 'Stop picker' : 'Start picker';
+  toggleButton.textContent = pickerEnabled ? 'Stop recording' : 'Start recording';
   statusElement.textContent = state.lastError || (pickerEnabled
-    ? 'Picker is active. Hover to inspect, then click any element to open the in-page recorder panel.'
+    ? 'Recording is active. Click controls or finish typing in inputs and text areas to capture actions.'
     : state.lastRecordedAt
       ? `Last recorded at ${new Date(state.lastRecordedAt).toLocaleTimeString()}`
-      : 'Ready to capture a UI step.');
+      : 'Ready to capture clicks and text entry.');
 
   stepCount.textContent = `${state.steps.length}`;
   stepsList.innerHTML = state.steps.map((step) => `
     <li>
-      <strong>${step.text || step.selector}</strong>
-      <span>${step.locatorStrategy ? `${step.locatorStrategy}: ` : ''}${step.recommendedLocator || step.selector}</span>
+      <strong>${step.type || 'action'} · ${step.text || step.selector}</strong>
+      <span>${step.selector}</span>
     </li>
   `).join('');
 }

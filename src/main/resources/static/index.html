@@ -12,7 +12,7 @@
         <div>
             <p class="eyebrow">Spring Boot + Gradle</p>
             <h1>Manual Test Recorder for XRAY documentation</h1>
-            <p class="hero-copy">Click the sample UI, generate XRAY-style manual test steps, and export the captured steps to CSV.</p>
+            <p class="hero-copy">Click or type in the sample UI, generate XRAY-style manual test steps, and export the captured steps to CSV.</p>
         </div>
         <div class="hero-actions">
             <button id="clear-recording" class="secondary">Clear recording</button>
@@ -34,17 +34,17 @@
     <main class="layout">
         <section class="panel extension-panel">
             <div class="panel-header">
-                <h2>Chrome extension UI picker</h2>
+                <h2>Chrome extension recorder</h2>
                 <span class="badge">New</span>
             </div>
             <div class="extension-grid">
                 <div>
-                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, click <strong>Start picker</strong>, then hover and click any element on the page you want to document. The in-page recorder now shows recommended locators, DOM context, attributes, and ready-to-copy automation snippets before each picked element is sent to <code>/api/events</code> and rendered below as an XRAY-ready step.</p>
+                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, and click <strong>Start recording</strong>. The extension records clicks plus committed text entry from inputs and text areas without showing an in-page picker, then sends each action to <code>/api/events</code> for XRAY-ready documentation.</p>
                     <ol class="extension-steps">
                         <li>Open <strong>chrome://extensions</strong>.</li>
                         <li>Enable <strong>Developer mode</strong>.</li>
                         <li>Choose <strong>Load unpacked</strong> and select this repository folder.</li>
-                        <li>Use the popup to start the picker and capture elements from the current tab.</li>
+                        <li>Use the popup to start recording actions from the current tab.</li>
                     </ol>
                 </div>
                 <div class="extension-files">
@@ -59,7 +59,7 @@
         <section class="panel sample-panel">
             <div class="panel-header">
                 <h2>Interactive sample flow</h2>
-                <span class="badge">Clicks and field changes are recorded automatically</span>
+                <span class="badge">Clicks and text entry are recorded automatically</span>
             </div>
 
             <div class="card-grid">
@@ -72,6 +72,10 @@
                     <label>
                         Password
                         <input id="password" name="password" data-record="input" type="password" placeholder="••••••••">
+                    </label>
+                    <label>
+                        Notes
+                        <textarea name="notes" data-record="input" rows="4" placeholder="Add execution notes for the test run"></textarea>
                     </label>
                     <button id="login-button" data-record="click">Login</button>
                 </article>
