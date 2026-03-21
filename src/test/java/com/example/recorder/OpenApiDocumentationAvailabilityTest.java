@@ -23,7 +23,9 @@ class OpenApiDocumentationAvailabilityTest {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/json"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Manual Test Recorder API")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Manual Test Recorder API")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/api/xray-evidence.zip")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/api/steps-with-screenshots.csv")));
     }
 
     @Test

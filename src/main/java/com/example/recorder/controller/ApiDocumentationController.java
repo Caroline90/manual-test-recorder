@@ -118,18 +118,23 @@ public class ApiDocumentationController {
                         "exportStepsCsv",
                         "Export XRAY test steps as CSV",
                         List.of(),
-                        Map.of(
-                                "responses", mapOf(
-                                        "200", mapOf(
-                                                "description", "CSV export",
-                                                "content", mapOf(
-                                                        "text/csv", mapOf(
-                                                                "schema", mapOf("type", "string", "format", "binary")
-                                                        )
-                                                )
-                                        )
-                                )
-                        )
+                        fileResponse("CSV export", "text/csv")
+                )
+        ));
+        paths.put("/api/steps-with-screenshots.csv", mapOf(
+                "get", operation(
+                        "exportStepsWithScreenshotsCsv",
+                        "Export XRAY test steps as CSV with screenshot file references",
+                        List.of(),
+                        fileResponse("CSV export with screenshot references", "text/csv")
+                )
+        ));
+        paths.put("/api/xray-evidence.zip", mapOf(
+                "get", operation(
+                        "exportXrayEvidenceBundle",
+                        "Export XRAY CSV plus screenshot evidence bundle",
+                        List.of(),
+                        fileResponse("ZIP bundle containing CSV exports and screenshots", "application/zip")
                 )
         ));
 
@@ -172,6 +177,22 @@ public class ApiDocumentationController {
                         "content", mapOf(
                                 "application/json", mapOf(
                                         "schema", schema
+                                )
+                        )
+                )
+        );
+    }
+
+
+    private Map<String, Object> fileResponse(String description, String contentType) {
+        return mapOf(
+                "responses", mapOf(
+                        "200", mapOf(
+                                "description", description,
+                                "content", mapOf(
+                                        contentType, mapOf(
+                                                "schema", mapOf("type", "string", "format", "binary")
+                                        )
                                 )
                         )
                 )
