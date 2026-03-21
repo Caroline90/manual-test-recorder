@@ -1,14 +1,20 @@
 const PICKER_ROOT_ATTRIBUTE = 'data-manual-test-recorder-picker-root';
+const STORAGE_KEY = 'manualTestRecorderState';
 
 if (!window.__manualTestRecorderUiPickerActive) {
   window.__manualTestRecorderUiPickerActive = true;
 
   let pickerEnabled = false;
+  let activeTabId = null;
   const hostDocument = document;
   const highlightBoxes = new WeakMap();
   const trackedDocuments = new Set();
   let styleElement = null;
   const pendingTextEntries = new WeakMap();
+
+  const TEXTBOX_ROLES = ['textbox', 'searchbox'];
+  const CHANGE_ROLES = ['combobox', 'listbox', 'option', 'textbox', 'searchbox', 'spinbutton', 'slider'];
+  const CLICK_ROLES = ['button', 'link', 'checkbox', 'radio', 'switch', 'tab', 'menuitem'];
 
   function ensureStyles() {
     if (styleElement?.isConnected) {
@@ -35,6 +41,14 @@ if (!window.__manualTestRecorderUiPickerActive) {
 
   function escapeCssValue(value) {
     return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  }
+
+  function roleFor(element) {
+    return (element?.getAttribute?.('role') || '').trim().toLowerCase();
+  }
+
+  function hasRole(element, roles) {
+    return roles.includes(roleFor(element));
   }
 
   function getHighlightBox(doc) {
@@ -85,6 +99,14 @@ if (!window.__manualTestRecorderUiPickerActive) {
     while (current && current.nodeType === Node.ELEMENT_NODE) {
       let selector = current.tagName.toLowerCase();
 
+      const id = current.getAttribute?.('id');
+      if (id) {
+        const candidate = `#${CSS.escape(id)}`;
+        if (doc.querySelectorAll(candidate).length === 1) {
+          return candidate;
+        }
+      }
+
       const name = current.getAttribute?.('name');
       if (name) {
         const candidate = `${selector}[name="${escapeCssValue(name)}"]`;
@@ -107,6 +129,11 @@ if (!window.__manualTestRecorderUiPickerActive) {
         if (doc.querySelectorAll(candidate).length === 1) {
           return candidate;
         }
+      }
+
+      const role = roleFor(current);
+      if (role) {
+        selector += `[role="${escapeCssValue(role)}"]`;
       }
 
       if (current.classList.length) {
@@ -136,24 +163,94 @@ if (!window.__manualTestRecorderUiPickerActive) {
     return path.join(' > ');
   }
 
+  function frameContextPrefix() {
+    if (window.top === window) {
+      return null;
+    }
+
+    const parts = [];
+
+    try {
+      const frameElement = window.frameElement;
+      if (frameElement instanceof Element) {
+        parts.push(uniqueCss(frameElement, frameElement.ownerDocument));
+      }
+    } catch (error) {
+      // Ignore cross-origin parent access.
+    }
+
+    if (window.location.href) {
+      parts.push(`url("${escapeCssValue(window.location.href)}")`);
+    }
+
+    return parts.length ? parts.join(' | ') : 'iframe';
+  }
+
   function selectorFor(element) {
-    return uniqueCss(element, element.ownerDocument);
+    const elementSelector = uniqueCss(element, element.ownerDocument);
+    const framePrefix = frameContextPrefix();
+    return framePrefix ? `${framePrefix} >>> ${elementSelector}` : elementSelector;
+  }
+
+  function selectedOptionLabel(element) {
+    if (element instanceof HTMLSelectElement) {
+      return element.selectedOptions[0]?.text?.trim() || element.value || '';
+    }
+
+    const ariaValueText = element.getAttribute?.('aria-valuetext');
+    if (ariaValueText) {
+      return ariaValueText.trim();
+    }
+
+    const ariaValueNow = element.getAttribute?.('aria-valuenow');
+    if (ariaValueNow) {
+      return ariaValueNow.trim();
+    }
+
+    const ariaActiveDescendant = element.getAttribute?.('aria-activedescendant');
+    if (ariaActiveDescendant) {
+      const activeOption = element.ownerDocument.getElementById(ariaActiveDescendant);
+      if (activeOption) {
+        return labelFor(activeOption);
+      }
+    }
+
+    return '';
   }
 
   function labelFor(element) {
     const ariaLabel = element.getAttribute?.('aria-label');
+    const ariaLabelledBy = element.getAttribute?.('aria-labelledby');
+    if (ariaLabelledBy) {
+      const labelText = ariaLabelledBy
+        .split(/\s+/)
+        .map((id) => element.ownerDocument.getElementById(id)?.innerText?.trim())
+        .filter(Boolean)
+        .join(' ');
+      if (labelText) {
+        return labelText;
+      }
+    }
+
     const text = element.innerText?.trim();
+    const selectedLabel = selectedOptionLabel(element);
     const value = typeof element.value === 'string' ? element.value.trim() : '';
     const placeholder = element.getAttribute?.('placeholder');
-    return ariaLabel || text || value || placeholder || element.getAttribute?.('name') || element.tagName.toLowerCase();
+    return ariaLabel || text || selectedLabel || value || placeholder || element.getAttribute?.('name') || roleFor(element) || element.tagName.toLowerCase();
   }
 
   function textValueFor(element) {
+    if (element instanceof HTMLSelectElement) {
+      return element.value || selectedOptionLabel(element) || null;
+    }
     if (typeof element.value === 'string') {
       return element.value;
     }
     if (element.isContentEditable) {
       return element.innerText?.trim() || element.textContent?.trim() || '';
+    }
+    if (hasRole(element, CHANGE_ROLES)) {
+      return selectedOptionLabel(element) || element.getAttribute?.('aria-label') || element.innerText?.trim() || null;
     }
     return null;
   }
@@ -161,18 +258,22 @@ if (!window.__manualTestRecorderUiPickerActive) {
   function resolveActionType(element) {
     const tagName = element.tagName.toLowerCase();
     const type = (element.getAttribute('type') || '').toLowerCase();
+    const role = roleFor(element);
 
-    if (tagName === 'select') {
+    if (tagName === 'select' || hasRole(element, ['combobox', 'listbox', 'option', 'spinbutton', 'slider'])) {
       return 'change';
     }
-    if (tagName === 'textarea' || element.isContentEditable) {
+    if (tagName === 'textarea' || element.isContentEditable || TEXTBOX_ROLES.includes(role)) {
       return 'input';
     }
     if (tagName === 'input') {
       if (['button', 'submit', 'reset', 'checkbox', 'radio', 'range', 'color', 'file'].includes(type)) {
-        return 'click';
+        return type === 'checkbox' || type === 'radio' || type === 'range' ? 'change' : 'click';
       }
       return 'input';
+    }
+    if (CLICK_ROLES.includes(role)) {
+      return role === 'checkbox' || role === 'radio' || role === 'switch' ? 'change' : 'click';
     }
     return 'click';
   }
@@ -214,10 +315,12 @@ if (!window.__manualTestRecorderUiPickerActive) {
     'textarea',
     'button',
     'label',
+    'option',
     'a[href]',
     '[contenteditable=""]',
     '[contenteditable="true"]',
     '[role="textbox"]',
+    '[role="searchbox"]',
     '[role="combobox"]',
     '[role="listbox"]',
     '[role="option"]',
@@ -227,7 +330,9 @@ if (!window.__manualTestRecorderUiPickerActive) {
     '[role="radio"]',
     '[role="switch"]',
     '[role="spinbutton"]',
-    '[role="slider"]'
+    '[role="slider"]',
+    '[role="tab"]',
+    '[role="menuitem"]'
   ].join(',');
 
   function resolveTargetElement(target) {
@@ -248,6 +353,11 @@ if (!window.__manualTestRecorderUiPickerActive) {
       }
     }
 
+    const optionTarget = target.closest('[role="option"], option');
+    if (optionTarget) {
+      return optionTarget;
+    }
+
     return target.closest(INTERACTIVE_SELECTOR) || target;
   }
 
@@ -257,7 +367,10 @@ if (!window.__manualTestRecorderUiPickerActive) {
     }
 
     const tagName = element.tagName.toLowerCase();
-    if (tagName === 'textarea' || tagName === 'select' || element.isContentEditable) {
+    if (tagName === 'textarea' || tagName === 'select' || element.isContentEditable || hasRole(element, TEXTBOX_ROLES)) {
+      return true;
+    }
+    if (hasRole(element, ['combobox', 'listbox', 'spinbutton', 'slider'])) {
       return true;
     }
     if (tagName !== 'input') {
@@ -273,7 +386,12 @@ if (!window.__manualTestRecorderUiPickerActive) {
   }
 
   function handleTextCommit(element) {
-    if (!pickerEnabled || !isTextEntryElement(element)) {
+    if (!pickerEnabled || !element) {
+      return;
+    }
+
+    const actionType = resolveActionType(element);
+    if (!['input', 'change'].includes(actionType)) {
       return;
     }
 
@@ -285,23 +403,7 @@ if (!window.__manualTestRecorderUiPickerActive) {
     }
 
     pendingTextEntries.set(element, nextValue);
-    recordInteraction(element, { type: element.tagName.toLowerCase() === 'select' ? 'change' : 'input', value: nextValue });
-  }
-
-  function registerFrame(frameElement) {
-    frameElement.addEventListener('load', () => {
-      try {
-        registerDocument(frameElement.contentDocument);
-      } catch (error) {
-        // Ignore cross-origin frames.
-      }
-    });
-
-    try {
-      registerDocument(frameElement.contentDocument);
-    } catch (error) {
-      // Ignore cross-origin frames.
-    }
+    recordInteraction(element, { type: actionType, value: nextValue });
   }
 
   function registerDocument(targetDocument) {
@@ -339,12 +441,12 @@ if (!window.__manualTestRecorderUiPickerActive) {
         return;
       }
 
-      recordInteraction(resolvedTarget, { type: 'click' });
+      recordInteraction(resolvedTarget, { type: resolveActionType(resolvedTarget) });
     };
 
     const onFocusIn = (event) => {
       const target = resolveTargetElement(toElement(event.target));
-      if (!pickerEnabled || !isTextEntryElement(target) || pendingTextEntries.has(target)) {
+      if (!pickerEnabled || !target || pendingTextEntries.has(target)) {
         return;
       }
       pendingTextEntries.set(target, textValueFor(target) || '');
@@ -352,7 +454,7 @@ if (!window.__manualTestRecorderUiPickerActive) {
 
     const onInput = (event) => {
       const target = resolveTargetElement(toElement(event.target));
-      if (!pickerEnabled || !isTextEntryElement(target)) {
+      if (!pickerEnabled || !target || !['input', 'change'].includes(resolveActionType(target))) {
         return;
       }
       showHighlight(target);
@@ -374,24 +476,6 @@ if (!window.__manualTestRecorderUiPickerActive) {
     targetDocument.addEventListener('input', onInput, true);
     targetDocument.addEventListener('change', onChange, true);
     targetDocument.addEventListener('blur', onBlur, true);
-
-    targetDocument.querySelectorAll('iframe, frame').forEach(registerFrame);
-
-    const observer = new MutationObserver((records) => {
-      records.forEach((record) => {
-        record.addedNodes.forEach((node) => {
-          if (!(node instanceof Element)) {
-            return;
-          }
-          if (node.matches('iframe, frame')) {
-            registerFrame(node);
-          }
-          node.querySelectorAll?.('iframe, frame').forEach(registerFrame);
-        });
-      });
-    });
-
-    observer.observe(targetDocument.documentElement, { childList: true, subtree: true });
   }
 
   function enablePickerUi() {
@@ -404,8 +488,40 @@ if (!window.__manualTestRecorderUiPickerActive) {
     clearAllHighlights();
   }
 
+  async function syncPickerState() {
+    try {
+      const state = await chrome.runtime.sendMessage({ type: 'get-state' });
+      activeTabId = state?.activeTabId ?? activeTabId;
+      if (activeTabId == null) {
+        return;
+      }
+
+      if (state?.pickerEnabledTabs?.[activeTabId]) {
+        enablePickerUi();
+      } else {
+        disablePickerUi();
+      }
+    } catch (error) {
+      disablePickerUi();
+    }
+  }
+
   ensureStyles();
   registerDocument(hostDocument);
+  syncPickerState();
+
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local' || !changes[STORAGE_KEY] || activeTabId == null) {
+      return;
+    }
+
+    const nextState = changes[STORAGE_KEY].newValue || {};
+    if (nextState.pickerEnabledTabs?.[activeTabId]) {
+      enablePickerUi();
+      return;
+    }
+    disablePickerUi();
+  });
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'picker-start') {
