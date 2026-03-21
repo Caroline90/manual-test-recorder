@@ -10,25 +10,11 @@ import org.springframework.stereotype.Service;
 public class CsvExportService {
 
     public String exportTestCase(XrayTestCase testCase) {
-        StringJoiner joiner = new StringJoiner(System.lineSeparator());
-        joiner.add("TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result");
+        return exportTestCase(testCase, false);
+    }
 
-        List<TestStep> steps = testCase.getSteps();
-        for (int i = 0; i < steps.size(); i++) {
-            TestStep step = steps.get(i);
-            joiner.add(String.join(";",
-                    csv(1),
-                    csv(i == 0 ? testCase.getSummary() : ""),
-                    csv(i == 0 ? testCase.getPriority() : ""),
-                    csv(i == 0 ? testCase.getPrimaryComponent() : ""),
-                    csv(i == 0 ? testCase.getSecondaryComponent() : ""),
-                    csv(step.getAction()),
-                    csv(step.getData()),
-                    csv(stepResult(step, i == steps.size() - 1))
-            ));
-        }
-
-        return joiner.toString();
+    public String exportTestCaseWithScreenshots(XrayTestCase testCase) {
+        return exportTestCase(testCase, true);
     }
 
     public String exportSteps(List<TestStep> steps) {
@@ -41,6 +27,51 @@ public class CsvExportService {
                 "",
                 steps
         ));
+    }
+
+    private String exportTestCase(XrayTestCase testCase, boolean includeScreenshots) {
+        StringJoiner joiner = new StringJoiner(System.lineSeparator());
+        joiner.add(includeScreenshots
+                ? "TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result;Screenshot"
+                : "TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result");
+
+        List<TestStep> steps = testCase.getSteps();
+        for (int i = 0; i < steps.size(); i++) {
+            TestStep step = steps.get(i);
+            if (includeScreenshots) {
+                joiner.add(String.join(";",
+                        csv(1),
+                        csv(i == 0 ? testCase.getSummary() : ""),
+                        csv(i == 0 ? testCase.getPriority() : ""),
+                        csv(i == 0 ? testCase.getPrimaryComponent() : ""),
+                        csv(i == 0 ? testCase.getSecondaryComponent() : ""),
+                        csv(step.getAction()),
+                        csv(step.getData()),
+                        csv(stepResult(step, i == steps.size() - 1)),
+                        csv(screenshotReference(step))
+                ));
+            } else {
+                joiner.add(String.join(";",
+                        csv(1),
+                        csv(i == 0 ? testCase.getSummary() : ""),
+                        csv(i == 0 ? testCase.getPriority() : ""),
+                        csv(i == 0 ? testCase.getPrimaryComponent() : ""),
+                        csv(i == 0 ? testCase.getSecondaryComponent() : ""),
+                        csv(step.getAction()),
+                        csv(step.getData()),
+                        csv(stepResult(step, i == steps.size() - 1))
+                ));
+            }
+        }
+
+        return joiner.toString();
+    }
+
+    private String screenshotReference(TestStep step) {
+        if (!hasText(step.getScreenshot())) {
+            return "";
+        }
+        return "screenshots/step-" + String.format("%02d", step.getIndex()) + ".png";
     }
 
     private String stepResult(TestStep step, boolean isLastStep) {

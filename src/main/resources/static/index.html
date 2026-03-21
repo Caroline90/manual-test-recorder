@@ -16,7 +16,8 @@
         </div>
         <div class="hero-actions">
             <button id="clear-recording" class="secondary">Clear recording</button>
-            <a href="/api/steps.csv" class="primary" id="export-csv">Export CSV</a>
+            <a href="/api/steps.csv" class="secondary" id="export-csv">Export CSV</a>
+            <a href="/api/xray-evidence.zip" class="primary" id="export-evidence">Export XRAY evidence bundle</a>
         </div>
     </header>
 
@@ -39,7 +40,7 @@
             </div>
             <div class="extension-grid">
                 <div>
-                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, and click <strong>Start recording</strong>. The extension records clicks plus committed text entry from inputs and text areas without showing an in-page picker, then sends each action to <code>/api/events</code> for XRAY-ready documentation.</p>
+                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, and click <strong>Start recording</strong>. The extension records clicks plus committed text entry from inputs and text areas without showing an in-page picker, then sends each action to <code>/api/events</code> for XRAY-ready documentation. Use the <strong>Export XRAY evidence bundle</strong> action when you need the CSV plus extracted screenshot files for Jira/XRAY attachments.</p>
                     <ol class="extension-steps">
                         <li>Open <strong>chrome://extensions</strong>.</li>
                         <li>Enable <strong>Developer mode</strong>.</li>
@@ -52,6 +53,32 @@
                     <strong>manifest.json</strong>
                     <strong>popup.html / popup.js / popup.css</strong>
                     <strong>background.js / content.js</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel export-panel">
+            <div class="panel-header">
+                <h2>XRAY screenshot upload workflow</h2>
+                <span class="badge">CSV + attachments</span>
+            </div>
+            <div class="export-grid">
+                <div>
+                    <p class="export-copy">XRAY CSV import creates the manual test steps, but screenshots are usually easier to manage as issue attachments or execution evidence. The evidence bundle gives you both formats:</p>
+                    <ul class="export-steps">
+                        <li><code>xray-steps.csv</code> for a standard XRAY CSV import.</li>
+                        <li><code>xray-steps-with-screenshots.csv</code> with an extra <strong>Screenshot</strong> column referencing each exported image file.</li>
+                        <li><code>screenshots/step-01.png</code>, <code>step-02.png</code>, and so on for upload into Jira/XRAY.</li>
+                    </ul>
+                </div>
+                <div class="export-note">
+                    <strong>Recommended flow</strong>
+                    <ol>
+                        <li>Import the CSV into XRAY.</li>
+                        <li>Open the created Jira/XRAY test.</li>
+                        <li>Upload the matching files from the bundle's <code>screenshots</code> folder.</li>
+                        <li>Reference the file names from the Screenshot column in your step documentation or evidence.</li>
+                    </ol>
                 </div>
             </div>
         </section>

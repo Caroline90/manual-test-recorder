@@ -3,10 +3,16 @@ package com.example.recorder.service;
 import com.example.recorder.model.RecordedEvent;
 import com.example.recorder.model.TestStep;
 import com.example.recorder.model.XrayTestCase;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RecorderWorkflowTest {
@@ -18,9 +24,66 @@ class RecorderWorkflowTest {
     private final XrayDocumentationService xrayDocumentationService =
             new XrayDocumentationService(eventStoreService, stepBuilderService);
     private final CsvExportService csvExportService = new CsvExportService();
+    private final XrayEvidenceExportService xrayEvidenceExportService =
+            new XrayEvidenceExportService(csvExportService);
 
     @Test
     void buildsXrayStepsAndExportsCsv() {
+        seedWorkflow();
+
+        List<TestStep> steps = stepBuilderService.buildSteps(eventStoreService.getAll());
+        XrayTestCase xrayTestCase = xrayDocumentationService.buildDocument();
+        String csv = csvExportService.exportTestCase(xrayTestCase);
+        String csvWithScreenshots = csvExportService.exportTestCaseWithScreenshots(xrayTestCase);
+
+        assertEquals(4, steps.size());
+        assertEquals("Go to login page", steps.get(0).getAction());
+        assertEquals("Enter username", steps.get(1).getAction());
+        assertEquals("peter", steps.get(1).getData());
+        assertEquals(SCREENSHOT_DATA_URL, steps.get(0).getScreenshot());
+        assertEquals("Test 1 for user story WEB-1", xrayTestCase.getSummary());
+        assertTrue(csv.contains("TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result"));
+        assertTrue(csv.contains("\"1\";\"Test 1 for user story WEB-1\";\"High\";\"\";\"\";\"Go to login page\";\"\";\"\""));
+        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Enter username\";\"peter\";\"\""));
+        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Click login button\";\"\";\"The action for 'Login' is triggered successfully.\""));
+        assertTrue(csvWithScreenshots.contains("TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result;Screenshot"));
+        assertTrue(csvWithScreenshots.contains("screenshots/step-01.png"));
+        assertTrue(csvWithScreenshots.contains("screenshots/step-04.png"));
+    }
+
+    @Test
+    void exportsZipBundleWithCsvAndScreenshots() throws IOException {
+        seedWorkflow();
+
+        byte[] zipBytes = xrayEvidenceExportService.exportBundle(xrayDocumentationService.buildDocument());
+
+        String stepsCsv = null;
+        String screenshotsCsv = null;
+        byte[] screenshotBytes = null;
+
+        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipBytes), StandardCharsets.UTF_8)) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                byte[] bytes = zipInputStream.readAllBytes();
+                switch (entry.getName()) {
+                    case "xray-steps.csv" -> stepsCsv = new String(bytes, StandardCharsets.UTF_8);
+                    case "xray-steps-with-screenshots.csv" -> screenshotsCsv = new String(bytes, StandardCharsets.UTF_8);
+                    case "screenshots/step-01.png" -> screenshotBytes = bytes;
+                    default -> {
+                    }
+                }
+            }
+        }
+
+        assertNotNull(stepsCsv);
+        assertNotNull(screenshotsCsv);
+        assertNotNull(screenshotBytes);
+        assertTrue(stepsCsv.contains("Go to login page"));
+        assertTrue(screenshotsCsv.contains("screenshots/step-01.png"));
+        assertEquals("fake", new String(screenshotBytes, StandardCharsets.UTF_8));
+    }
+
+    private void seedWorkflow() {
         eventStoreService.append(new RecordedEvent(
                 "navigate", "Login page", null, null, null,
                 "http://localhost:8080/login", "body", "WEB-1", SCREENSHOT_DATA_URL, null
@@ -37,20 +100,5 @@ class RecorderWorkflowTest {
                 "click", "Login", null, null, null,
                 "http://localhost:8080/login", "button", "WEB-1", SCREENSHOT_DATA_URL, null
         ));
-
-        List<TestStep> steps = stepBuilderService.buildSteps(eventStoreService.getAll());
-        XrayTestCase xrayTestCase = xrayDocumentationService.buildDocument();
-        String csv = csvExportService.exportTestCase(xrayTestCase);
-
-        assertEquals(4, steps.size());
-        assertEquals("Go to login page", steps.get(0).getAction());
-        assertEquals("Enter username", steps.get(1).getAction());
-        assertEquals("peter", steps.get(1).getData());
-        assertEquals(SCREENSHOT_DATA_URL, steps.get(0).getScreenshot());
-        assertEquals("Test 1 for user story WEB-1", xrayTestCase.getSummary());
-        assertTrue(csv.contains("TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result"));
-        assertTrue(csv.contains("\"1\";\"Test 1 for user story WEB-1\";\"High\";\"\";\"\";\"Go to login page\";\"\";\"\""));
-        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Enter username\";\"peter\";\"\""));
-        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Click login button\";\"\";\"The action for 'Login' is triggered successfully.\""));
     }
 }
