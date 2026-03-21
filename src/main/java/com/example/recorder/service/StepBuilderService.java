@@ -22,19 +22,32 @@ public class StepBuilderService {
         String type = normalize(event.getType());
         return new TestStep(
                 index,
-                actionFor(type),
+                actionFor(type, event),
                 targetFor(event),
                 detailFor(type, event),
+                dataFor(type, event),
                 expectedResultFor(type, event)
         );
     }
 
-    private String actionFor(String type) {
+    private String actionFor(String type, RecordedEvent event) {
         return switch (type) {
-            case "click" -> "Click";
-            case "input", "type", "change" -> "Enter data";
-            case "navigate" -> "Open page";
-            case "assert" -> "Verify";
+            case "click" -> hasText(event.getText())
+                    ? "Click " + describeElement(event)
+                    : "Click target element";
+            case "input", "type", "change" -> hasText(event.getText())
+                    ? "Enter " + lowerCaseFirst(event.getText())
+                    : hasText(event.getName())
+                    ? "Enter " + event.getName()
+                    : "Enter data";
+            case "navigate" -> hasText(event.getText())
+                    ? "Go to " + lowerCaseFirst(event.getText())
+                    : hasText(event.getPageTitle())
+                    ? "Go to " + lowerCaseFirst(event.getPageTitle())
+                    : "Open page";
+            case "assert" -> hasText(event.getText())
+                    ? "Verify " + event.getText()
+                    : "Verify expected result";
             default -> "Perform " + type;
         };
     }
@@ -58,10 +71,10 @@ public class StepBuilderService {
     private String detailFor(String type, RecordedEvent event) {
         return switch (type) {
             case "click" -> hasText(event.getText())
-                    ? "Click the element labelled '" + event.getText() + "'."
+                    ? "Activate " + describeElement(event) + "."
                     : "Click the target element.";
             case "input", "type", "change" -> hasText(event.getValue())
-                    ? "Enter '" + event.getValue() + "' into the field."
+                    ? "Enter '" + event.getValue() + "' into " + describeField(event) + "."
                     : "Provide the required input value.";
             case "navigate" -> hasText(event.getUrl())
                     ? "Navigate to " + event.getUrl() + "."
@@ -72,6 +85,13 @@ public class StepBuilderService {
             default -> hasText(event.getText())
                     ? event.getText()
                     : "Record the observed interaction.";
+        };
+    }
+
+    private String dataFor(String type, RecordedEvent event) {
+        return switch (type) {
+            case "input", "type", "change" -> defaultText(event.getValue());
+            default -> "";
         };
     }
 
@@ -89,6 +109,53 @@ public class StepBuilderService {
                     : "The expected result is confirmed.";
             default -> "The interaction completes without errors.";
         };
+    }
+
+    private String describeElement(RecordedEvent event) {
+        if (hasText(event.getText()) && hasText(event.getSelector())) {
+            return lowerCaseFirst(event.getText()) + " " + selectorLabel(event.getSelector());
+        }
+        if (hasText(event.getText())) {
+            return event.getText();
+        }
+        if (hasText(event.getSelector())) {
+            return selectorLabel(event.getSelector());
+        }
+        return "the target element";
+    }
+
+    private String selectorLabel(String selector) {
+        if (!hasText(selector)) {
+            return "element";
+        }
+        if (selector.startsWith("[name='") && selector.endsWith("']")) {
+            return "field";
+        }
+        if (selector.contains("button")) {
+            return "button";
+        }
+        return "element";
+    }
+
+    private String describeField(RecordedEvent event) {
+        if (hasText(event.getText())) {
+            return lowerCaseFirst(event.getText()) + " field";
+        }
+        if (hasText(event.getName())) {
+            return event.getName() + " field";
+        }
+        return "the field";
+    }
+
+    private String lowerCaseFirst(String value) {
+        if (!hasText(value)) {
+            return "";
+        }
+        return value.substring(0, 1).toLowerCase(Locale.ROOT) + value.substring(1);
+    }
+
+    private String defaultText(String value) {
+        return hasText(value) ? value : "";
     }
 
     private String normalize(String value) {

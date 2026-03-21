@@ -23,14 +23,16 @@ public class ManualTestRecorderTestHarness {
         ));
         eventStoreService.append(new RecordedEvent(
                 "input", "Notes", "Typed from textarea", null, "notes",
-                "http://localhost:8080", "[name=\'notes\']", "Manual Test Recorder", null
+                "http://localhost:8080", "[name='notes']", "Manual Test Recorder", null
         ));
 
         List<TestStep> steps = stepBuilderService.buildSteps(eventStoreService.getAll());
         require(steps.size() == 2, "expected 2 steps");
-        require(csvExportService.exportSteps(steps).contains("Typed from textarea"), "expected CSV export to include entered value");
+        require(csvExportService.exportTestCase(xrayDocumentationService.buildDocument()).contains("Typed from textarea"),
+                "expected CSV export to include entered value");
         require(steps.get(1).getTarget().contains("notes"), "expected selector-based target for textarea input");
-        require(xrayDocumentationService.buildDocument().getSummary().contains("Manual Test Recorder"), "expected XRAY summary to include page title");
+        require(xrayDocumentationService.buildDocument().getSummary().contains("Manual Test Recorder"),
+                "expected XRAY summary to include page title");
 
         System.out.println("All manual-test-recorder checks passed.");
     }

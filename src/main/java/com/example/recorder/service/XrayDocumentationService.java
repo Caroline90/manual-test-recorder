@@ -27,7 +27,10 @@ public class XrayDocumentationService {
                 .orElse("recorded workflow");
 
         return new XrayTestCase(
-                "XRAY test for " + pageName,
+                "Test 1 for user story " + pageName,
+                "High",
+                "",
+                "",
                 "Capture a manual workflow and convert it into reusable XRAY-style test steps.",
                 "Open the sample recorder page and start capturing interactions.",
                 steps

@@ -5,13 +5,15 @@ public class TestStep {
     private final String action;
     private final String target;
     private final String detail;
+    private final String data;
     private final String expectedResult;
 
-    public TestStep(int index, String action, String target, String detail, String expectedResult) {
+    public TestStep(int index, String action, String target, String detail, String data, String expectedResult) {
         this.index = index;
         this.action = action;
         this.target = target;
         this.detail = detail;
+        this.data = data;
         this.expectedResult = expectedResult;
     }
 
@@ -29,6 +31,10 @@ public class TestStep {
 
     public String getDetail() {
         return detail;
+    }
+
+    public String getData() {
+        return data;
     }
 
     public String getExpectedResult() {
