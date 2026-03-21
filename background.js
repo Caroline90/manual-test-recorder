@@ -120,23 +120,32 @@ async function setError(message) {
   return nextState;
 }
 
-async function postStepToBackend(step) {
+async function sendBackendRequest(method, body) {
   const state = await getState();
   const response = await fetch(state.backendUrl, {
-    method: 'POST',
+    method,
     headers: {
       'Content-Type': 'application/json',
       'X-Manual-Test-Recorder-Origin': extensionOrigin()
     },
-    body: JSON.stringify({
-      ...step,
-      xrayTicket: state.xrayTicket || step.xrayTicket || null
-    })
+    body: body === undefined ? undefined : JSON.stringify(body)
   });
 
   if (!response.ok) {
     throw new Error(`Backend returned ${response.status}`);
   }
+}
+
+async function postStepToBackend(step) {
+  const state = await getState();
+  await sendBackendRequest('POST', {
+    ...step,
+    xrayTicket: state.xrayTicket || step.xrayTicket || null
+  });
+}
+
+async function clearBackendSteps() {
+  await sendBackendRequest('DELETE');
 }
 
 async function captureStepScreenshot(windowId) {
@@ -190,6 +199,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.type === 'clear-steps') {
+      try {
+        await clearBackendSteps();
+      } catch (error) {
+        throw new Error(`Unable to clear backend events: ${error.message}`);
+      }
+
       await updateState((state) => ({
         ...state,
         steps: [],
