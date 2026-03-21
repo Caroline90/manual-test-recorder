@@ -150,6 +150,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return;
     }
 
+    if (message.type === 'picker-ui-disabled') {
+      if (typeof sender.tab?.id === 'number') {
+        await setPickerEnabled(sender.tab.id, false);
+      }
+      sendResponse({ ok: true });
+      return;
+    }
+
     if (message.type === 'record-step') {
       const step = {
         ...message.payload,

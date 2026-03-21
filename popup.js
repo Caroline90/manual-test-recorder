@@ -15,7 +15,7 @@ function render(state, tabId) {
   const pickerEnabled = !!state.pickerEnabledTabs?.[tabId];
   toggleButton.textContent = pickerEnabled ? 'Stop picker' : 'Start picker';
   statusElement.textContent = state.lastError || (pickerEnabled
-    ? 'Picker is active. Click any element on the page to record it.'
+    ? 'Picker is active. Hover to inspect, then click any element to open the in-page recorder panel.'
     : state.lastRecordedAt
       ? `Last recorded at ${new Date(state.lastRecordedAt).toLocaleTimeString()}`
       : 'Ready to capture a UI step.');
@@ -24,7 +24,7 @@ function render(state, tabId) {
   stepsList.innerHTML = state.steps.map((step) => `
     <li>
       <strong>${step.text || step.selector}</strong>
-      <span>${step.selector}</span>
+      <span>${step.locatorStrategy ? `${step.locatorStrategy}: ` : ''}${step.recommendedLocator || step.selector}</span>
     </li>
   `).join('');
 }
