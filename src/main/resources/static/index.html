@@ -20,6 +20,17 @@
         </div>
     </header>
 
+    <section class="recording-banner" aria-live="polite">
+        <div class="recording-status" id="recording-status" data-state="idle">
+            <span class="status-dot" aria-hidden="true"></span>
+            <div>
+                <strong id="recording-status-title">Recorder idle</strong>
+                <p id="recording-status-detail">Recording starts automatically when you interact with a tracked element.</p>
+            </div>
+        </div>
+        <p class="selection-hint">Selected elements stay highlighted so you can confirm exactly what has been captured.</p>
+    </section>
+
     <main class="layout">
         <section class="panel extension-panel">
             <div class="panel-header">
