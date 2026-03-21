@@ -5,12 +5,14 @@ public class TestStep {
     private final String action;
     private final String target;
     private final String detail;
+    private final String expectedResult;
 
-    public TestStep(int index, String action, String target, String detail) {
+    public TestStep(int index, String action, String target, String detail, String expectedResult) {
         this.index = index;
         this.action = action;
         this.target = target;
         this.detail = detail;
+        this.expectedResult = expectedResult;
     }
 
     public int getIndex() {
@@ -29,13 +31,7 @@ public class TestStep {
         return detail;
     }
 
-    @Override
-    public String toString() {
-        return "TestStep{" +
-                "index=" + index +
-                ", action='" + action + '\'' +
-                ", target='" + target + '\'' +
-                ", detail='" + detail + '\'' +
-                '}';
+    public String getExpectedResult() {
+        return expectedResult;
     }
 }
