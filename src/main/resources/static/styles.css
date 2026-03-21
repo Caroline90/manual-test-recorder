@@ -198,7 +198,54 @@ td {
     vertical-align: top;
 }
 
+
+.extension-panel {
+    grid-column: 1 / -1;
+}
+
+.extension-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 0.8fr;
+    gap: 18px;
+    align-items: start;
+}
+
+.extension-copy,
+.extension-steps {
+    margin: 0;
+}
+
+.extension-steps {
+    margin-top: 12px;
+    padding-left: 20px;
+    color: #44506a;
+}
+
+.extension-files {
+    display: grid;
+    gap: 8px;
+    background: #f8faff;
+    border: 1px solid #e3e9f7;
+    border-radius: 20px;
+    padding: 18px;
+}
+
+.extension-files span,
+code {
+    color: #53627d;
+}
+
+code {
+    background: #edf2ff;
+    border-radius: 8px;
+    padding: 2px 6px;
+}
+
 @media (max-width: 900px) {
+    .extension-grid {
+        grid-template-columns: 1fr;
+    }
+
     .hero,
     .panel-header {
         flex-direction: column;

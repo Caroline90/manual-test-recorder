@@ -32,6 +32,7 @@ public class StepBuilderService {
     private String actionFor(String type) {
         return switch (type) {
             case "click" -> "Click";
+            case "pick" -> "Select element";
             case "input", "type", "change" -> "Enter data";
             case "navigate" -> "Open page";
             case "assert" -> "Verify";
@@ -63,6 +64,9 @@ public class StepBuilderService {
             case "click" -> hasText(event.getText())
                     ? "Click the element labelled '" + event.getText() + "'."
                     : "Click the target element.";
+            case "pick" -> hasText(event.getText())
+                    ? "Use the Chrome extension picker to capture the element '" + event.getText() + "'."
+                    : "Use the Chrome extension picker to capture the target element.";
             case "input", "type", "change" -> hasText(event.getValue())
                     ? "Enter '" + event.getValue() + "' into the field."
                     : "Provide the required input value.";
@@ -83,6 +87,9 @@ public class StepBuilderService {
             case "click" -> hasText(event.getText())
                     ? "The action for '" + event.getText() + "' is triggered successfully."
                     : "The click action completes successfully.";
+            case "pick" -> hasText(event.getSelector())
+                    ? "The element " + event.getSelector() + " is highlighted and captured as a manual test step."
+                    : "The selected element is highlighted and captured as a manual test step.";
             case "input", "type", "change" -> "The entered value is accepted and visible in the field.";
             case "navigate" -> hasText(event.getPageTitle())
                     ? "The page '" + event.getPageTitle() + "' is displayed."

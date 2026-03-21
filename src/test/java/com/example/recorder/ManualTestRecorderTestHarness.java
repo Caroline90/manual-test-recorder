@@ -18,7 +18,7 @@ public class ManualTestRecorderTestHarness {
         CsvExportService csvExportService = new CsvExportService();
 
         eventStoreService.append(new RecordedEvent(
-                "click", "Login", null, "login-button", null,
+                "pick", "Login", null, "login-button", null,
                 "http://localhost:8080", "#login-button", "Manual Test Recorder", null
         ));
         eventStoreService.append(new RecordedEvent(

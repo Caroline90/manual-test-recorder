@@ -24,7 +24,7 @@ class RecorderWorkflowTest {
                 "http://localhost:8080", "body", "Manual Test Recorder", null
         ));
         eventStoreService.append(new RecordedEvent(
-                "click", "Login", null, "login-button", null,
+                "pick", "Login", null, "login-button", null,
                 "http://localhost:8080", "#login-button", "Manual Test Recorder", null
         ));
         eventStoreService.append(new RecordedEvent(
@@ -37,11 +37,12 @@ class RecorderWorkflowTest {
         String csv = csvExportService.exportSteps(steps);
 
         assertEquals(3, steps.size());
-        assertEquals("Click", steps.get(1).getAction());
+        assertEquals("Select element", steps.get(1).getAction());
         assertEquals("#login-button", steps.get(1).getTarget());
         assertTrue(steps.get(2).getDetail().contains("qa@example.com"));
         assertEquals("XRAY test for Manual Test Recorder", xrayTestCase.getSummary());
         assertTrue(csv.contains("Expected Result"));
+        assertTrue(steps.get(1).getExpectedResult().contains("#login-button"));
         assertTrue(csv.contains("#login-button"));
     }
 }
