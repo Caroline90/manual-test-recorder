@@ -17,10 +17,10 @@ function render(state, tabId) {
   const pickerEnabled = !!state.pickerEnabledTabs?.[tabId];
   toggleButton.textContent = pickerEnabled ? 'Stop recording' : 'Start recording';
   statusElement.textContent = state.lastError || (pickerEnabled
-    ? 'Recording is active. Click controls or finish typing in inputs and text areas to capture actions.'
+    ? 'Recording is active. Click controls or finish typing in inputs, text areas, or grouped request-body sections to capture actions.'
     : state.lastRecordedAt
       ? `Last recorded at ${new Date(state.lastRecordedAt).toLocaleTimeString()}`
-      : 'Ready to capture clicks and text entry.');
+      : 'Ready to capture clicks, text entry, and grouped request-body snapshots.');
 
   stepCount.textContent = `${state.steps.length}`;
   stepsList.innerHTML = state.steps.map((step) => `

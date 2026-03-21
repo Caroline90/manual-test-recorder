@@ -9,6 +9,7 @@ const recordingStatusDetail = document.getElementById('recording-status-detail')
 const xrayTicketInput = document.getElementById('xray-ticket');
 const exportCsvLink = document.getElementById('export-csv');
 const exportEvidenceLink = document.getElementById('export-evidence');
+const recordedGroupSnapshots = new WeakMap();
 
 function selectorFor(element) {
     if (element.id) {
@@ -70,6 +71,58 @@ function buildPayload(element, type) {
         xrayTicket: currentTicket() || null,
         screenshot: null
     };
+}
+
+function recordableFields(container) {
+    return Array.from(container.querySelectorAll('input, textarea, select'))
+        .filter((field) => !field.disabled && !field.dataset.skipRecording);
+}
+
+function groupLabelFor(group) {
+    return group.dataset.recordGroupLabel
+        || group.querySelector('h3, h2, legend')?.textContent?.trim()
+        || 'Grouped input';
+}
+
+function groupSnapshotValue(group) {
+    return recordableFields(group)
+        .map((field) => {
+            const label = labelFor(field);
+            const value = Object.prototype.hasOwnProperty.call(field, 'value') ? field.value || '' : '';
+            return `${label}: ${value}`;
+        })
+        .filter((entry) => !entry.endsWith(': '))
+        .join('\n');
+}
+
+function groupedPayloadFor(group) {
+    return {
+        type: 'input',
+        text: groupLabelFor(group),
+        value: groupSnapshotValue(group) || null,
+        id: group.id || null,
+        name: group.dataset.recordGroup || null,
+        url: window.location.href,
+        selector: selectorFor(group),
+        pageTitle: document.title,
+        xrayTicket: currentTicket() || null,
+        screenshot: null
+    };
+}
+
+async function maybeRecordGroupedInputs(element) {
+    const group = element.closest('[data-record-group]');
+    if (!group) {
+        return;
+    }
+
+    const snapshot = groupSnapshotValue(group);
+    if (!snapshot || recordedGroupSnapshots.get(group) === snapshot) {
+        return;
+    }
+
+    recordedGroupSnapshots.set(group, snapshot);
+    await sendEvent(groupedPayloadFor(group));
 }
 
 function screenshotMarkup(step) {
@@ -178,6 +231,10 @@ async function refreshView() {
 }
 
 function bindRecorder(element) {
+    if (element.dataset.recorderBound === 'true') {
+        return;
+    }
+
     const eventType = eventTypeFor(element);
     const handlerType = eventType === 'click' || eventType === 'assert' ? 'click' : 'change';
     element.addEventListener(handlerType, async (event) => {
@@ -185,7 +242,11 @@ function bindRecorder(element) {
             event.preventDefault();
         }
         await sendEvent(buildPayload(element, eventType));
+        if (eventType === 'input' || eventType === 'change') {
+            await maybeRecordGroupedInputs(element);
+        }
     });
+    element.dataset.recorderBound = 'true';
 }
 
 function attachRecorder() {
