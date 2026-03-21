@@ -55,7 +55,7 @@ async function setPickerEnabled(tabId, enabled) {
 async function appendRecordedStep(step) {
   const nextState = await updateState((state) => ({
     ...state,
-    steps: [step, ...state.steps].slice(0, 50),
+    steps: [...state.steps, step].slice(-50),
     lastRecordedAt: step.recordedAt,
     lastError: null
   }));
