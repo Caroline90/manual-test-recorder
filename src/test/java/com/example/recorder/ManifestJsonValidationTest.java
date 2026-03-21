@@ -20,6 +20,7 @@ class ManifestJsonValidationTest {
 
         assertThat(manifest.isObject()).isTrue();
         assertThat(manifest.path("manifest_version").asInt()).isEqualTo(3);
-        assertThat(manifest.path("name").asText()).isEqualTo("Manual Test Recorder Picker");
+        assertThat(manifest.path("name").asText()).isEqualTo("Manual Test Recorder");
+        assertThat(manifest.path("content_scripts").get(0).path("all_frames").asBoolean()).isTrue();
     }
 }
