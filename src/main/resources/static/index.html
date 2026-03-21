@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Test Recorder</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="page-shell">
+    <header class="hero">
+        <div>
+            <p class="eyebrow">Spring Boot + Gradle</p>
+            <h1>Manual Test Recorder for XRAY documentation</h1>
+            <p class="hero-copy">Click the sample UI, generate XRAY-style manual test steps, and export the captured steps to CSV.</p>
+        </div>
+        <div class="hero-actions">
+            <button id="clear-recording" class="secondary">Clear recording</button>
+            <a href="/api/steps.csv" class="primary" id="export-csv">Export CSV</a>
+        </div>
+    </header>
+
+    <main class="layout">
+        <section class="panel sample-panel">
+            <div class="panel-header">
+                <h2>Interactive sample flow</h2>
+                <span class="badge">Clicks and field changes are recorded automatically</span>
+            </div>
+
+            <div class="card-grid">
+                <article class="card">
+                    <h3>Login</h3>
+                    <label>
+                        Email
+                        <input id="email" name="email" data-record="input" type="email" placeholder="qa@example.com">
+                    </label>
+                    <label>
+                        Password
+                        <input id="password" name="password" data-record="input" type="password" placeholder="••••••••">
+                    </label>
+                    <button id="login-button" data-record="click">Login</button>
+                </article>
+
+                <article class="card">
+                    <h3>Navigation shortcuts</h3>
+                    <button id="open-dashboard" data-record="click">Open dashboard</button>
+                    <button id="open-reports" data-record="click">View reports</button>
+                    <a id="help-link" data-record="click" href="#xray-preview">Jump to XRAY preview</a>
+                </article>
+
+                <article class="card">
+                    <h3>Assertions</h3>
+                    <button id="assert-dashboard" data-record="assert">Assert dashboard visible</button>
+                    <button id="assert-toast" data-record="assert">Assert success toast</button>
+                    <p class="hint">Assertion buttons simulate documenting expected results for XRAY.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Recorded steps</h2>
+                <span id="step-count" class="badge">0 steps</span>
+            </div>
+            <ol id="steps-list" class="steps-list"></ol>
+        </section>
+
+        <section class="panel" id="xray-preview">
+            <div class="panel-header">
+                <h2>XRAY documentation preview</h2>
+                <span class="badge">Live preview</span>
+            </div>
+            <div id="xray-metadata" class="xray-metadata"></div>
+            <table>
+                <thead>
+                <tr>
+                    <th>Step</th>
+                    <th>Action</th>
+                    <th>Target</th>
+                    <th>Data</th>
+                    <th>Expected Result</th>
+                </tr>
+                </thead>
+                <tbody id="xray-table-body"></tbody>
+            </table>
+        </section>
+    </main>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
