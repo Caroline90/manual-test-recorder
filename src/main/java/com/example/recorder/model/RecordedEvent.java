@@ -13,6 +13,7 @@ public class RecordedEvent {
     private String url;
     private String selector;
     private String pageTitle;
+    private String xrayTicket;
     private String screenshot;
     private Instant recordedAt;
 
@@ -20,11 +21,11 @@ public class RecordedEvent {
     }
 
     public RecordedEvent(String type, String text, String value, String id, String name, String url) {
-        this(type, text, value, id, name, url, null, null, null, null);
+        this(type, text, value, id, name, url, null, null, null, null, null);
     }
 
     public RecordedEvent(String type, String text, String value, String id, String name, String url,
-                         String selector, String pageTitle, String screenshot, Instant recordedAt) {
+                         String selector, String pageTitle, String xrayTicket, String screenshot, Instant recordedAt) {
         this.type = type;
         this.text = text;
         this.value = value;
@@ -33,6 +34,7 @@ public class RecordedEvent {
         this.url = url;
         this.selector = selector;
         this.pageTitle = pageTitle;
+        this.xrayTicket = xrayTicket;
         this.screenshot = screenshot;
         this.recordedAt = recordedAt;
     }
@@ -99,6 +101,15 @@ public class RecordedEvent {
 
     public void setPageTitle(String pageTitle) {
         this.pageTitle = pageTitle;
+    }
+
+
+    public String getXrayTicket() {
+        return xrayTicket;
+    }
+
+    public void setXrayTicket(String xrayTicket) {
+        this.xrayTicket = xrayTicket;
     }
 
     public String getScreenshot() {

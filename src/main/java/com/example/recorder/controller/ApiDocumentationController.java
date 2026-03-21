@@ -36,6 +36,7 @@ public class ApiDocumentationController {
                         "url", nullableStringSchema("Page URL where the event was recorded."),
                         "selector", nullableStringSchema("CSS selector representing the target element."),
                         "pageTitle", nullableStringSchema("Browser tab title."),
+                        "xrayTicket", nullableStringSchema("XRAY ticket number associated with the recording."),
                         "screenshot", nullableStringSchema("Base64 data URL screenshot captured for the event."),
                         "recordedAt", mapOf(
                                 "type", "string",
@@ -68,6 +69,7 @@ public class ApiDocumentationController {
                         "secondaryComponent", stringSchema("Secondary component."),
                         "objective", stringSchema("Objective for the test case."),
                         "precondition", stringSchema("Precondition for the test case."),
+                        "xrayTicket", nullableStringSchema("XRAY ticket number associated with the export."),
                         "steps", mapOf(
                                 "type", "array",
                                 "items", mapOf("$ref", "#/components/schemas/TestStep")

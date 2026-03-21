@@ -21,11 +21,11 @@ public class ManualTestRecorderTestHarness {
 
         eventStoreService.append(new RecordedEvent(
                 "click", "Login", null, null, null,
-                "http://localhost:8080", "button", "Manual Test Recorder", SCREENSHOT_DATA_URL, null
+                "http://localhost:8090", "button", "Manual Test Recorder", "XRAY-42", SCREENSHOT_DATA_URL, null
         ));
         eventStoreService.append(new RecordedEvent(
                 "input", "Notes", "Typed from textarea", null, "notes",
-                "http://localhost:8080", "[name='notes']", "Manual Test Recorder", SCREENSHOT_DATA_URL, null
+                "http://localhost:8090", "[name='notes']", "Manual Test Recorder", "XRAY-42", SCREENSHOT_DATA_URL, null
         ));
 
         List<TestStep> steps = stepBuilderService.buildSteps(eventStoreService.getAll());
@@ -35,8 +35,11 @@ public class ManualTestRecorderTestHarness {
         require(steps.get(1).getTarget().contains("notes"), "expected selector-based target for textarea input");
         require(SCREENSHOT_DATA_URL.equals(steps.get(0).getScreenshot()),
                 "expected screenshots to be preserved on each generated step");
-        require(xrayDocumentationService.buildDocument().getSummary().contains("Manual Test Recorder"),
-                "expected XRAY summary to include page title");
+        require(xrayDocumentationService.buildDocument().getSummary().contains("XRAY-42"),
+                "expected XRAY summary to include ticket");
+        require(csvExportService.exportTestCaseWithScreenshots(xrayDocumentationService.buildDocument())
+                        .contains("screenshots/xray-42-step-01.png"),
+                "expected screenshot export to include the XRAY ticket in file names");
 
         System.out.println("All manual-test-recorder checks passed.");
     }

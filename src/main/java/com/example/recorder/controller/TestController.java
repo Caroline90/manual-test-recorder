@@ -66,10 +66,13 @@ public class TestController {
 
     @GetMapping(value = "/steps.csv", produces = "text/csv")
     public ResponseEntity<byte[]> exportCsv() {
-        String csv = csvExportService.exportTestCase(xrayDocumentationService.buildDocument());
+        XrayTestCase xrayTestCase = xrayDocumentationService.buildDocument();
+        String csv = csvExportService.exportTestCase(xrayTestCase);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
-        headers.setContentDisposition(ContentDisposition.attachment().filename("xray-steps.csv").build());
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename(exportFileName(xrayTestCase.getXrayTicket(), "xray-steps", ".csv"))
+                .build());
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(csv.getBytes(StandardCharsets.UTF_8));
@@ -78,10 +81,13 @@ public class TestController {
 
     @GetMapping(value = "/steps-with-screenshots.csv", produces = "text/csv")
     public ResponseEntity<byte[]> exportCsvWithScreenshots() {
-        String csv = csvExportService.exportTestCaseWithScreenshots(xrayDocumentationService.buildDocument());
+        XrayTestCase xrayTestCase = xrayDocumentationService.buildDocument();
+        String csv = csvExportService.exportTestCaseWithScreenshots(xrayTestCase);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
-        headers.setContentDisposition(ContentDisposition.attachment().filename("xray-steps-with-screenshots.csv").build());
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename(exportFileName(xrayTestCase.getXrayTicket(), "xray-steps-with-screenshots", ".csv"))
+                .build());
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(csv.getBytes(StandardCharsets.UTF_8));
@@ -89,10 +95,13 @@ public class TestController {
 
     @GetMapping(value = "/xray-evidence.zip", produces = "application/zip")
     public ResponseEntity<byte[]> exportXrayEvidenceBundle() {
-        byte[] zip = xrayEvidenceExportService.exportBundle(xrayDocumentationService.buildDocument());
+        XrayTestCase xrayTestCase = xrayDocumentationService.buildDocument();
+        byte[] zip = xrayEvidenceExportService.exportBundle(xrayTestCase);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("application/zip"));
-        headers.setContentDisposition(ContentDisposition.attachment().filename("xray-evidence.zip").build());
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename(exportFileName(xrayTestCase.getXrayTicket(), "xray-evidence", ".zip"))
+                .build());
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(zip);
@@ -101,5 +110,17 @@ public class TestController {
     @DeleteMapping("/events")
     public void clearEvents() {
         eventStoreService.clear();
+    }
+
+    private String exportFileName(String xrayTicket, String baseName, String extension) {
+        if (xrayTicket == null || xrayTicket.isBlank()) {
+            return baseName + extension;
+        }
+        String prefix = xrayTicket.trim()
+                .replaceAll("[^A-Za-z0-9._-]+", "-")
+                .replaceAll("-{2,}", "-")
+                .replaceAll("(^-|-$)", "")
+                .toLowerCase();
+        return prefix.isBlank() ? baseName + extension : prefix + "-" + baseName + extension;
     }
 }

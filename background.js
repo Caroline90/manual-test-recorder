@@ -1,23 +1,71 @@
 const STORAGE_KEY = 'manualTestRecorderState';
+const DEFAULT_PORT = '8090';
+const DEFAULT_EVENT_PATH = '/api/events';
 const DEFAULT_STATE = {
-  backendUrl: 'http://localhost:8080/api/events',
+  backendUrl: `http://localhost:${DEFAULT_PORT}${DEFAULT_EVENT_PATH}`,
+  xrayTicket: '',
   steps: [],
   pickerEnabledTabs: {},
   lastError: null,
   lastRecordedAt: null
 };
 
+function normalizeBackendUrl(rawValue) {
+  const value = (rawValue || '').trim();
+  if (!value) {
+    return DEFAULT_STATE.backendUrl;
+  }
+
+  const isPortOnly = /^\d+$/.test(value);
+  const candidate = isPortOnly
+    ? `http://localhost:${value}`
+    : /^[a-z]+:\/\//i.test(value)
+      ? value
+      : value.includes(':') || value.startsWith('localhost') || value.startsWith('127.0.0.1')
+        ? `http://${value}`
+        : `http://localhost:${value}`;
+
+  let url;
+  try {
+    url = new URL(candidate);
+  } catch (error) {
+    return DEFAULT_STATE.backendUrl;
+  }
+
+  if (!url.pathname || url.pathname === '/') {
+    url.pathname = DEFAULT_EVENT_PATH;
+  }
+
+  return url.toString();
+}
+
+function normalizeTicket(rawValue) {
+  return (rawValue || '').trim().toUpperCase();
+}
+
 async function getState() {
   const stored = await chrome.storage.local.get(STORAGE_KEY);
-  return {
+  const state = {
     ...DEFAULT_STATE,
     ...(stored[STORAGE_KEY] || {})
+  };
+
+  return {
+    ...state,
+    backendUrl: normalizeBackendUrl(state.backendUrl),
+    xrayTicket: normalizeTicket(state.xrayTicket)
   };
 }
 
 async function saveState(nextState) {
-  await chrome.storage.local.set({ [STORAGE_KEY]: nextState });
-  return nextState;
+  const normalizedState = {
+    ...DEFAULT_STATE,
+    ...nextState,
+    backendUrl: normalizeBackendUrl(nextState.backendUrl),
+    xrayTicket: normalizeTicket(nextState.xrayTicket)
+  };
+  await chrome.storage.local.set({ [STORAGE_KEY]: normalizedState });
+  return normalizedState;
 }
 
 async function updateState(mutator) {
@@ -80,7 +128,10 @@ async function postStepToBackend(step) {
       'Content-Type': 'application/json',
       'X-Manual-Test-Recorder-Origin': extensionOrigin()
     },
-    body: JSON.stringify(step)
+    body: JSON.stringify({
+      ...step,
+      xrayTicket: state.xrayTicket || step.xrayTicket || null
+    })
   });
 
   if (!response.ok) {
@@ -153,7 +204,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'update-backend-url') {
       await updateState((state) => ({
         ...state,
-        backendUrl: message.backendUrl || DEFAULT_STATE.backendUrl
+        backendUrl: normalizeBackendUrl(message.backendUrl)
+      }));
+      await broadcastState();
+      sendResponse({ ok: true });
+      return;
+    }
+
+    if (message.type === 'update-xray-ticket') {
+      await updateState((state) => ({
+        ...state,
+        xrayTicket: normalizeTicket(message.xrayTicket)
       }));
       await broadcastState();
       sendResponse({ ok: true });
@@ -170,12 +231,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.type === 'record-step') {
       const windowId = sender.tab?.windowId;
+      const state = await getState();
       const screenshot = typeof windowId === 'number'
         ? await captureStepScreenshot(windowId)
         : null;
       const step = {
         ...message.payload,
         type: message.payload?.type || 'pick',
+        xrayTicket: state.xrayTicket || message.payload?.xrayTicket || null,
         screenshot,
         recordedAt: new Date().toISOString()
       };

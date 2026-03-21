@@ -31,8 +31,8 @@ public class XrayEvidenceExportService {
                 addTextEntry(zip, "xray-steps.csv", csvExportService.exportTestCase(testCase));
                 addTextEntry(zip, "xray-steps-with-screenshots.csv",
                         csvExportService.exportTestCaseWithScreenshots(testCase));
-                addTextEntry(zip, "README.txt", buildReadme(testCase.getSteps()));
-                addScreenshots(zip, testCase.getSteps());
+                addTextEntry(zip, "README.txt", buildReadme(testCase));
+                addScreenshots(zip, testCase);
             }
             return output.toByteArray();
         } catch (IOException exception) {
@@ -40,7 +40,8 @@ public class XrayEvidenceExportService {
         }
     }
 
-    private void addScreenshots(ZipOutputStream zip, List<TestStep> steps) throws IOException {
+    private void addScreenshots(ZipOutputStream zip, XrayTestCase testCase) throws IOException {
+        List<TestStep> steps = testCase.getSteps();
         for (TestStep step : steps) {
             if (!hasText(step.getScreenshot())) {
                 continue;
@@ -48,7 +49,8 @@ public class XrayEvidenceExportService {
 
             byte[] screenshotBytes = decodeScreenshot(step.getScreenshot());
             String extension = fileExtension(step.getScreenshot());
-            ZipEntry entry = new ZipEntry("screenshots/step-" + String.format("%02d", step.getIndex()) + extension);
+            ZipEntry entry = new ZipEntry("screenshots/"
+                    + csvExportService.screenshotFileName(testCase.getXrayTicket(), step.getIndex(), extension));
             zip.putNextEntry(entry);
             zip.write(screenshotBytes);
             zip.closeEntry();
@@ -83,10 +85,12 @@ public class XrayEvidenceExportService {
         };
     }
 
-    private String buildReadme(List<TestStep> steps) {
+    private String buildReadme(XrayTestCase testCase) {
+        List<TestStep> steps = testCase.getSteps();
         long screenshotCount = steps.stream().filter(step -> hasText(step.getScreenshot())).count();
         return String.join(System.lineSeparator(),
                 "XRAY screenshot export",
+                hasText(testCase.getXrayTicket()) ? "Ticket: " + testCase.getXrayTicket() : "Ticket: not provided",
                 "",
                 "Files included:",
                 "- xray-steps.csv: standard CSV import without screenshot references.",

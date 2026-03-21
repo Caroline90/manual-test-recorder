@@ -41,14 +41,15 @@ class RecorderWorkflowTest {
         assertEquals("Enter username", steps.get(1).getAction());
         assertEquals("peter", steps.get(1).getData());
         assertEquals(SCREENSHOT_DATA_URL, steps.get(0).getScreenshot());
-        assertEquals("Test 1 for user story WEB-1", xrayTestCase.getSummary());
+        assertEquals("WEB-1", xrayTestCase.getXrayTicket());
+        assertEquals("Test 1 for XRAY ticket WEB-1", xrayTestCase.getSummary());
         assertTrue(csv.contains("TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result"));
-        assertTrue(csv.contains("\"1\";\"Test 1 for user story WEB-1\";\"High\";\"\";\"\";\"Go to login page\";\"\";\"\""));
+        assertTrue(csv.contains("\"1\";\"Test 1 for XRAY ticket WEB-1\";\"High\";\"\";\"\";\"Go to login page\";\"\";\"\""));
         assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Enter username\";\"peter\";\"\""));
         assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Click login button\";\"\";\"The action for 'Login' is triggered successfully.\""));
         assertTrue(csvWithScreenshots.contains("TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result;Screenshot"));
-        assertTrue(csvWithScreenshots.contains("screenshots/step-01.png"));
-        assertTrue(csvWithScreenshots.contains("screenshots/step-04.png"));
+        assertTrue(csvWithScreenshots.contains("screenshots/web-1-step-01.png"));
+        assertTrue(csvWithScreenshots.contains("screenshots/web-1-step-04.png"));
     }
 
     @Test
@@ -59,6 +60,7 @@ class RecorderWorkflowTest {
 
         String stepsCsv = null;
         String screenshotsCsv = null;
+        String readme = null;
         byte[] screenshotBytes = null;
 
         try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipBytes), StandardCharsets.UTF_8)) {
@@ -68,7 +70,8 @@ class RecorderWorkflowTest {
                 switch (entry.getName()) {
                     case "xray-steps.csv" -> stepsCsv = new String(bytes, StandardCharsets.UTF_8);
                     case "xray-steps-with-screenshots.csv" -> screenshotsCsv = new String(bytes, StandardCharsets.UTF_8);
-                    case "screenshots/step-01.png" -> screenshotBytes = bytes;
+                    case "README.txt" -> readme = new String(bytes, StandardCharsets.UTF_8);
+                    case "screenshots/web-1-step-01.png" -> screenshotBytes = bytes;
                     default -> {
                     }
                 }
@@ -77,28 +80,30 @@ class RecorderWorkflowTest {
 
         assertNotNull(stepsCsv);
         assertNotNull(screenshotsCsv);
+        assertNotNull(readme);
         assertNotNull(screenshotBytes);
         assertTrue(stepsCsv.contains("Go to login page"));
-        assertTrue(screenshotsCsv.contains("screenshots/step-01.png"));
+        assertTrue(screenshotsCsv.contains("screenshots/web-1-step-01.png"));
+        assertTrue(readme.contains("Ticket: WEB-1"));
         assertEquals("fake", new String(screenshotBytes, StandardCharsets.UTF_8));
     }
 
     private void seedWorkflow() {
         eventStoreService.append(new RecordedEvent(
                 "navigate", "Login page", null, null, null,
-                "http://localhost:8080/login", "body", "WEB-1", SCREENSHOT_DATA_URL, null
+                "http://localhost:8090/login", "body", "WEB-1", "WEB-1", SCREENSHOT_DATA_URL, null
         ));
         eventStoreService.append(new RecordedEvent(
                 "input", "Username", "peter", null, "username",
-                "http://localhost:8080/login", "[name='username']", "WEB-1", SCREENSHOT_DATA_URL, null
+                "http://localhost:8090/login", "[name='username']", "WEB-1", "WEB-1", SCREENSHOT_DATA_URL, null
         ));
         eventStoreService.append(new RecordedEvent(
                 "input", "Password", "pwrd123", null, "password",
-                "http://localhost:8080/login", "[name='password']", "WEB-1", SCREENSHOT_DATA_URL, null
+                "http://localhost:8090/login", "[name='password']", "WEB-1", "WEB-1", SCREENSHOT_DATA_URL, null
         ));
         eventStoreService.append(new RecordedEvent(
                 "click", "Login", null, null, null,
-                "http://localhost:8080/login", "button", "WEB-1", SCREENSHOT_DATA_URL, null
+                "http://localhost:8090/login", "button", "WEB-1", "WEB-1", SCREENSHOT_DATA_URL, null
         ));
     }
 }

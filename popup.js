@@ -1,4 +1,5 @@
 const backendInput = document.getElementById('backend-url');
+const xrayTicketInput = document.getElementById('xray-ticket');
 const toggleButton = document.getElementById('toggle-picker');
 const clearButton = document.getElementById('clear-steps');
 const statusElement = document.getElementById('status');
@@ -12,6 +13,7 @@ async function getActiveTab() {
 
 function render(state, tabId) {
   backendInput.value = state.backendUrl;
+  xrayTicketInput.value = state.xrayTicket || '';
   const pickerEnabled = !!state.pickerEnabledTabs?.[tabId];
   toggleButton.textContent = pickerEnabled ? 'Stop recording' : 'Start recording';
   statusElement.textContent = state.lastError || (pickerEnabled
@@ -25,6 +27,7 @@ function render(state, tabId) {
     <li>
       <strong>${step.type || 'action'} · ${step.text || step.selector}</strong>
       <span>${step.selector}</span>
+      <small>${step.xrayTicket ? `XRAY: ${step.xrayTicket}` : 'XRAY ticket not set'}</small>
       ${step.screenshot ? `<img src="${step.screenshot}" alt="Screenshot for ${step.text || step.selector}">` : '<em>No screenshot captured.</em>'}
     </li>
   `).join('');
@@ -40,6 +43,14 @@ backendInput.addEventListener('change', async () => {
   await chrome.runtime.sendMessage({
     type: 'update-backend-url',
     backendUrl: backendInput.value.trim()
+  });
+  await refresh();
+});
+
+xrayTicketInput.addEventListener('change', async () => {
+  await chrome.runtime.sendMessage({
+    type: 'update-xray-ticket',
+    xrayTicket: xrayTicketInput.value.trim()
   });
   await refresh();
 });

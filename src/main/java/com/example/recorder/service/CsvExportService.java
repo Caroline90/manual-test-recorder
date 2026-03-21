@@ -25,6 +25,7 @@ public class CsvExportService {
                 "",
                 "",
                 "",
+                "",
                 steps
         ));
     }
@@ -48,7 +49,7 @@ public class CsvExportService {
                         csv(step.getAction()),
                         csv(step.getData()),
                         csv(stepResult(step, i == steps.size() - 1)),
-                        csv(screenshotReference(step))
+                        csv(screenshotReference(testCase, step))
                 ));
             } else {
                 joiner.add(String.join(";",
@@ -67,11 +68,29 @@ public class CsvExportService {
         return joiner.toString();
     }
 
-    private String screenshotReference(TestStep step) {
+    private String screenshotReference(XrayTestCase testCase, TestStep step) {
         if (!hasText(step.getScreenshot())) {
             return "";
         }
-        return "screenshots/step-" + String.format("%02d", step.getIndex()) + ".png";
+        return "screenshots/" + screenshotFileName(testCase.getXrayTicket(), step.getIndex(), ".png");
+    }
+
+    public String screenshotFileName(String xrayTicket, int stepIndex, String extension) {
+        String normalizedExtension = hasText(extension) ? extension : ".png";
+        String prefix = sanitizeFileSegment(xrayTicket);
+        String stepName = "step-" + String.format("%02d", stepIndex) + normalizedExtension;
+        return prefix.isBlank() ? stepName : prefix + "-" + stepName;
+    }
+
+    private String sanitizeFileSegment(String value) {
+        if (!hasText(value)) {
+            return "";
+        }
+        return value.trim()
+                .replaceAll("[^A-Za-z0-9._-]+", "-")
+                .replaceAll("-{2,}", "-")
+                .replaceAll("(^-|-$)", "")
+                .toLowerCase();
     }
 
     private String stepResult(TestStep step, boolean isLastStep) {
