@@ -20,29 +20,34 @@ class RecorderWorkflowTest {
     @Test
     void buildsXrayStepsAndExportsCsv() {
         eventStoreService.append(new RecordedEvent(
-                "navigate", "Recorder home", null, null, null,
-                "http://localhost:8080", "body", "Manual Test Recorder", null
+                "navigate", "Login page", null, null, null,
+                "http://localhost:8080/login", "body", "WEB-1", null
+        ));
+        eventStoreService.append(new RecordedEvent(
+                "input", "Username", "peter", null, "username",
+                "http://localhost:8080/login", "[name='username']", "WEB-1", null
+        ));
+        eventStoreService.append(new RecordedEvent(
+                "input", "Password", "pwrd123", null, "password",
+                "http://localhost:8080/login", "[name='password']", "WEB-1", null
         ));
         eventStoreService.append(new RecordedEvent(
                 "click", "Login", null, null, null,
-                "http://localhost:8080", "button", "Manual Test Recorder", null
-        ));
-        eventStoreService.append(new RecordedEvent(
-                "input", "Email", "qa@example.com", null, "email",
-                "http://localhost:8080", "[name=\'email\']", "Manual Test Recorder", null
+                "http://localhost:8080/login", "button", "WEB-1", null
         ));
 
         List<TestStep> steps = stepBuilderService.buildSteps(eventStoreService.getAll());
         XrayTestCase xrayTestCase = xrayDocumentationService.buildDocument();
-        String csv = csvExportService.exportSteps(steps);
+        String csv = csvExportService.exportTestCase(xrayTestCase);
 
-        assertEquals(3, steps.size());
-        assertEquals("Click", steps.get(1).getAction());
-        assertEquals("button", steps.get(1).getTarget());
-        assertTrue(steps.get(2).getDetail().contains("qa@example.com"));
-        assertEquals("XRAY test for Manual Test Recorder", xrayTestCase.getSummary());
-        assertTrue(csv.contains("Expected Result"));
-        assertTrue(steps.get(2).getTarget().contains("email"));
-        assertTrue(csv.contains("[name='email']"));
+        assertEquals(4, steps.size());
+        assertEquals("Go to login page", steps.get(0).getAction());
+        assertEquals("Enter username", steps.get(1).getAction());
+        assertEquals("peter", steps.get(1).getData());
+        assertEquals("Test 1 for user story WEB-1", xrayTestCase.getSummary());
+        assertTrue(csv.contains("TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result"));
+        assertTrue(csv.contains("\"1\";\"Test 1 for user story WEB-1\";\"High\";\"\";\"\";\"Go to login page\";\"\";\"\""));
+        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Enter username\";\"peter\";\"\""));
+        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Click login button\";\"\";\"The action for 'Login' is triggered successfully.\""));
     }
 }

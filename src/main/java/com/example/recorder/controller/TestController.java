@@ -62,7 +62,7 @@ public class TestController {
 
     @GetMapping(value = "/steps.csv", produces = "text/csv")
     public ResponseEntity<byte[]> exportCsv() {
-        String csv = csvExportService.exportSteps(getSteps());
+        String csv = csvExportService.exportTestCase(xrayDocumentationService.buildDocument());
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
         headers.setContentDisposition(ContentDisposition.attachment().filename("xray-steps.csv").build());
