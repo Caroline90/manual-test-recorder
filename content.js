@@ -11,6 +11,7 @@ if (!window.__manualTestRecorderUiPickerActive) {
   const trackedDocuments = new Set();
   let styleElement = null;
   const pendingTextEntries = new WeakMap();
+  const recordedGroupSnapshots = new WeakMap();
 
   const TEXTBOX_ROLES = ['textbox', 'searchbox'];
   const CHANGE_ROLES = ['combobox', 'listbox', 'option', 'textbox', 'searchbox', 'spinbutton', 'slider'];
@@ -292,6 +293,51 @@ if (!window.__manualTestRecorderUiPickerActive) {
     };
   }
 
+  function recordableFields(container) {
+    return Array.from(container.querySelectorAll('input, textarea, select, [contenteditable=""], [contenteditable="true"], [role="textbox"], [role="searchbox"], [role="combobox"], [role="listbox"], [role="spinbutton"], [role="slider"]'))
+      .filter((field) => !field.disabled && !field.hasAttribute('data-skip-recording'));
+  }
+
+  function groupedContainerFor(element) {
+    return element?.closest?.('[data-record-group]');
+  }
+
+  function groupLabelFor(container) {
+    return container?.getAttribute?.('data-record-group-label')
+      || container?.querySelector?.('h1, h2, h3, legend')?.textContent?.trim()
+      || 'Grouped input';
+  }
+
+  function groupSnapshotValue(container) {
+    return recordableFields(container)
+      .map((field) => {
+        const label = labelFor(field);
+        const value = textValueFor(field) || '';
+        return `${label}: ${value}`;
+      })
+      .filter((entry) => !entry.endsWith(': '))
+      .join('\n');
+  }
+
+  function maybeRecordGroupedInputs(element) {
+    const container = groupedContainerFor(element);
+    if (!pickerEnabled || !container) {
+      return;
+    }
+
+    const snapshot = groupSnapshotValue(container);
+    if (!snapshot || recordedGroupSnapshots.get(container) === snapshot) {
+      return;
+    }
+
+    recordedGroupSnapshots.set(container, snapshot);
+    recordInteraction(container, {
+      type: 'input',
+      text: groupLabelFor(container),
+      value: snapshot
+    });
+  }
+
   function recordInteraction(element, overrides = {}) {
     if (!pickerEnabled || !element || element.hasAttribute(PICKER_ROOT_ATTRIBUTE)) {
       return;
@@ -404,6 +450,7 @@ if (!window.__manualTestRecorderUiPickerActive) {
 
     pendingTextEntries.set(element, nextValue);
     recordInteraction(element, { type: actionType, value: nextValue });
+    maybeRecordGroupedInputs(element);
   }
 
   function registerDocument(targetDocument) {

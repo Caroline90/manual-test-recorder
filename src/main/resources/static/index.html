@@ -40,7 +40,7 @@
             </div>
             <div class="extension-grid">
                 <div>
-                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, and click <strong>Start recording</strong>. The extension records clicks plus committed text entry from inputs and text areas without showing any in-page picker, then sends each action to <code>/api/events</code> for XRAY-ready documentation. The popup defaults to <code>http://localhost:8090/api/events</code>, but you can enter a different port or full URL whenever the backend changes. Add an XRAY ticket in the popup so every exported screenshot file stays tied to the right issue.</p>
+                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, and click <strong>Start recording</strong>. The extension records clicks, committed text entry from inputs and text areas, and grouped snapshots for sections marked with <code>data-record-group</code> so multi-field request bodies can be documented together. Each action is sent to <code>/api/events</code> for XRAY-ready documentation. The popup defaults to <code>http://localhost:8090/api/events</code>, but you can enter a different port or full URL whenever the backend changes. Add an XRAY ticket in the popup so every exported screenshot file stays tied to the right issue.</p>
                     <ol class="extension-steps">
                         <li>Open <strong>chrome://extensions</strong>.</li>
                         <li>Enable <strong>Developer mode</strong>.</li>
@@ -112,7 +112,7 @@
             </div>
 
             <div class="card-grid">
-                <article class="card">
+                <article id="login-credentials-card" class="card" data-record-group="login-credentials" data-record-group-label="Login credentials">
                     <h3>Login</h3>
                     <label>
                         First name
@@ -133,7 +133,7 @@
                     <button id="login-button" data-record="click">Login</button>
                 </article>
 
-                <article class="card">
+                <article id="execution-details-card" class="card" data-record-group="execution-details" data-record-group-label="Execution details">
                     <h3>Execution details</h3>
                     <label>
                         Environment
@@ -147,6 +147,23 @@
                         Expected outcome
                         <textarea id="expected-outcome" name="expectedOutcome" rows="3" placeholder="Describe the outcome you expect to validate"></textarea>
                     </label>
+                </article>
+
+                <article id="request-body-card" class="card" data-record-group="request-body" data-record-group-label="Create order request body">
+                    <h3>Create order request body</h3>
+                    <label>
+                        Customer id
+                        <input id="customer-id" name="customerId" type="text" placeholder="CUST-1001">
+                    </label>
+                    <label>
+                        Order reference
+                        <input id="order-reference" name="orderReference" type="text" placeholder="WEB-ORDER-42">
+                    </label>
+                    <label>
+                        Request body
+                        <textarea id="request-body" name="requestBody" rows="6" placeholder='{"customerId":"CUST-1001","orderReference":"WEB-ORDER-42","notes":"Priority shipment"}'></textarea>
+                    </label>
+                    <p class="hint">Any edit in this card also records one grouped snapshot so all request-body inputs stay together.</p>
                 </article>
 
                 <article class="card">
