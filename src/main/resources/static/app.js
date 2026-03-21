@@ -36,8 +36,21 @@ function buildPayload(element, type) {
         name: element.name || null,
         url: window.location.href,
         selector: selectorFor(element),
-        pageTitle: document.title
+        pageTitle: document.title,
+        screenshot: null
     };
+}
+
+function screenshotMarkup(step) {
+    if (!step.screenshot) {
+        return '<em class="screenshot-empty">Screenshot available when the Chrome extension records the step.</em>';
+    }
+
+    return `
+        <a class="screenshot-link" href="${step.screenshot}" target="_blank" rel="noreferrer">
+            <img src="${step.screenshot}" alt="Screenshot for step ${step.index}">
+        </a>
+    `;
 }
 
 function setRecordingState(steps) {
@@ -97,6 +110,7 @@ async function refreshView() {
             <span>${step.target}</span>
             <p>${step.detail}</p>
             <small>${step.expectedResult}</small>
+            <div class="step-screenshot">${screenshotMarkup(step)}</div>
         </li>
     `).join('');
 
@@ -113,6 +127,7 @@ async function refreshView() {
             <td>${step.target}</td>
             <td>${step.detail}</td>
             <td>${step.expectedResult}</td>
+            <td>${screenshotMarkup(step)}</td>
         </tr>
     `).join('');
 

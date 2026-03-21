@@ -25,6 +25,7 @@ function render(state, tabId) {
     <li>
       <strong>${step.type || 'action'} · ${step.text || step.selector}</strong>
       <span>${step.selector}</span>
+      ${step.screenshot ? `<img src="${step.screenshot}" alt="Screenshot for ${step.text || step.selector}">` : '<em>No screenshot captured.</em>'}
     </li>
   `).join('');
 }

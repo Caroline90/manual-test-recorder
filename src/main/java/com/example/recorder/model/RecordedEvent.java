@@ -13,6 +13,7 @@ public class RecordedEvent {
     private String url;
     private String selector;
     private String pageTitle;
+    private String screenshot;
     private Instant recordedAt;
 
     public RecordedEvent() {
@@ -23,7 +24,7 @@ public class RecordedEvent {
     }
 
     public RecordedEvent(String type, String text, String value, String id, String name, String url,
-                         String selector, String pageTitle, Instant recordedAt) {
+                         String selector, String pageTitle, String screenshot, Instant recordedAt) {
         this.type = type;
         this.text = text;
         this.value = value;
@@ -32,6 +33,7 @@ public class RecordedEvent {
         this.url = url;
         this.selector = selector;
         this.pageTitle = pageTitle;
+        this.screenshot = screenshot;
         this.recordedAt = recordedAt;
     }
 
@@ -97,6 +99,14 @@ public class RecordedEvent {
 
     public void setPageTitle(String pageTitle) {
         this.pageTitle = pageTitle;
+    }
+
+    public String getScreenshot() {
+        return screenshot;
+    }
+
+    public void setScreenshot(String screenshot) {
+        this.screenshot = screenshot;
     }
 
     public Instant getRecordedAt() {

@@ -88,6 +88,16 @@ async function postStepToBackend(step) {
   }
 }
 
+async function captureStepScreenshot(windowId) {
+  try {
+    return await chrome.tabs.captureVisibleTab(windowId, {
+      format: 'png'
+    });
+  } catch (error) {
+    return null;
+  }
+}
+
 chrome.runtime.onInstalled.addListener(async () => {
   await saveState(DEFAULT_STATE);
 });
@@ -159,9 +169,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.type === 'record-step') {
+      const windowId = sender.tab?.windowId;
+      const screenshot = typeof windowId === 'number'
+        ? await captureStepScreenshot(windowId)
+        : null;
       const step = {
         ...message.payload,
         type: message.payload?.type || 'pick',
+        screenshot,
         recordedAt: new Date().toISOString()
       };
       await appendRecordedStep(step);
