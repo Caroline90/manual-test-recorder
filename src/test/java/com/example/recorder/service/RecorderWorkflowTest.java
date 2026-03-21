@@ -24,12 +24,12 @@ class RecorderWorkflowTest {
                 "http://localhost:8080", "body", "Manual Test Recorder", null
         ));
         eventStoreService.append(new RecordedEvent(
-                "pick", "Login", null, "login-button", null,
-                "http://localhost:8080", "#login-button", "Manual Test Recorder", null
+                "click", "Login", null, null, null,
+                "http://localhost:8080", "button", "Manual Test Recorder", null
         ));
         eventStoreService.append(new RecordedEvent(
-                "input", "Email", "qa@example.com", "email", "email",
-                "http://localhost:8080", "#email", "Manual Test Recorder", null
+                "input", "Email", "qa@example.com", null, "email",
+                "http://localhost:8080", "[name=\'email\']", "Manual Test Recorder", null
         ));
 
         List<TestStep> steps = stepBuilderService.buildSteps(eventStoreService.getAll());
@@ -37,12 +37,12 @@ class RecorderWorkflowTest {
         String csv = csvExportService.exportSteps(steps);
 
         assertEquals(3, steps.size());
-        assertEquals("Select element", steps.get(1).getAction());
-        assertEquals("#login-button", steps.get(1).getTarget());
+        assertEquals("Click", steps.get(1).getAction());
+        assertEquals("button", steps.get(1).getTarget());
         assertTrue(steps.get(2).getDetail().contains("qa@example.com"));
         assertEquals("XRAY test for Manual Test Recorder", xrayTestCase.getSummary());
         assertTrue(csv.contains("Expected Result"));
-        assertTrue(steps.get(1).getExpectedResult().contains("#login-button"));
-        assertTrue(csv.contains("#login-button"));
+        assertTrue(steps.get(2).getTarget().contains("email"));
+        assertTrue(csv.contains("[name='email']"));
     }
 }

@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manual Test Recorder Picker</title>
+  <title>Manual Test Recorder</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <main class="popup-shell">
     <section class="hero">
       <p class="eyebrow">Chrome extension</p>
-      <h1>UI picker recorder</h1>
-      <p>Start the in-page picker to inspect locators, preview DOM context, and record the selected element as a manual test step.</p>
+      <h1>Manual recorder</h1>
+      <p>Start background recording for the current tab. The extension records clicks and committed text entry without showing any in-page picker UI.</p>
     </section>
 
     <label class="field">
@@ -20,7 +20,7 @@
     </label>
 
     <div class="actions">
-      <button id="toggle-picker" class="primary">Start picker</button>
+      <button id="toggle-picker" class="primary">Start recording</button>
       <button id="clear-steps" class="secondary">Clear</button>
     </div>
 
@@ -28,10 +28,10 @@
 
     <section class="recorded-steps">
       <div class="section-header">
-        <h2>Recent picks</h2>
+        <h2>Recent actions</h2>
         <span id="step-count" class="badge">0</span>
       </div>
-      <p class="section-copy">Each pick opens a draggable inspector on the page and pushes the recommended locator to the recorder backend.</p>
+      <p class="section-copy">Recorded actions are sent directly to the recorder backend and listed here with the resolved selector.</p>
       <ol id="steps-list"></ol>
     </section>
   </main>

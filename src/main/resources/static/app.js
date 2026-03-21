@@ -8,9 +8,6 @@ const recordingStatusTitle = document.getElementById('recording-status-title');
 const recordingStatusDetail = document.getElementById('recording-status-detail');
 
 function selectorFor(element) {
-    if (element.id) {
-        return `#${element.id}`;
-    }
     if (element.name) {
         return `[name='${element.name}']`;
     }
@@ -27,7 +24,7 @@ async function sendEvent(payload) {
 }
 
 function labelFor(element) {
-    return element.innerText?.trim() || element.value?.trim() || element.placeholder || element.name || element.id || element.tagName.toLowerCase();
+    return element.innerText?.trim() || element.value?.trim() || element.placeholder || element.name || element.tagName.toLowerCase();
 }
 
 function buildPayload(element, type) {
@@ -35,7 +32,7 @@ function buildPayload(element, type) {
         type,
         text: labelFor(element),
         value: element.value || null,
-        id: element.id || null,
+        id: null,
         name: element.name || null,
         url: window.location.href,
         selector: selectorFor(element),
