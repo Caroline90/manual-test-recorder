@@ -5,7 +5,7 @@
 
 body {
   margin: 0;
-  width: 360px;
+  width: 380px;
   background: #f6f8fe;
   color: #1b2740;
 }
@@ -15,8 +15,8 @@ body {
 }
 
 .hero {
-  background: #fff;
-  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f2f6ff 100%);
+  border-radius: 18px;
   padding: 16px;
   box-shadow: 0 12px 28px rgba(49, 94, 251, 0.12);
 }
@@ -34,7 +34,8 @@ body {
   margin: 0;
 }
 
-.hero p:last-child {
+.hero p:last-child,
+.section-copy {
   margin-bottom: 0;
   color: #55627a;
 }
@@ -109,6 +110,12 @@ button {
   padding: 6px 10px;
   font-size: 12px;
   font-weight: 700;
+}
+
+.section-copy {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 ol {
