@@ -21,6 +21,30 @@
     </header>
 
     <main class="layout">
+        <section class="panel extension-panel">
+            <div class="panel-header">
+                <h2>Chrome extension UI picker</h2>
+                <span class="badge">New</span>
+            </div>
+            <div class="extension-grid">
+                <div>
+                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, click <strong>Start picker</strong>, and then click any element on the page you want to document. Each picked element is sent to <code>/api/events</code> and appears below as an XRAY-ready step.</p>
+                    <ol class="extension-steps">
+                        <li>Open <strong>chrome://extensions</strong>.</li>
+                        <li>Enable <strong>Developer mode</strong>.</li>
+                        <li>Choose <strong>Load unpacked</strong> and select this repository folder.</li>
+                        <li>Use the popup to start the picker and capture elements from the current tab.</li>
+                    </ol>
+                </div>
+                <div class="extension-files">
+                    <span>Extension files included</span>
+                    <strong>manifest.json</strong>
+                    <strong>popup.html / popup.js / popup.css</strong>
+                    <strong>background.js / content.js</strong>
+                </div>
+            </div>
+        </section>
+
         <section class="panel sample-panel">
             <div class="panel-header">
                 <h2>Interactive sample flow</h2>

@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Manual Test Recorder Picker",
+  "description": "Toggle a UI picker, click any element, and send the recorded step to the Manual Test Recorder backend.",
+  "version": "1.0.0",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "http://localhost:8080/*",
+    "http://127.0.0.1:8080/*"
+  ],
+  "action": {
+    "default_title": "Manual Test Recorder Picker",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

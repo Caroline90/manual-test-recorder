@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Test Recorder Picker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="popup-shell">
+    <section class="hero">
+      <p class="eyebrow">Chrome extension</p>
+      <h1>UI picker</h1>
+      <p>Select an element on the current page and save it as a recorded test step.</p>
+    </section>
+
+    <label class="field">
+      Backend endpoint
+      <input id="backend-url" type="url" placeholder="http://localhost:8080/api/events">
+    </label>
+
+    <div class="actions">
+      <button id="toggle-picker" class="primary">Start picker</button>
+      <button id="clear-steps" class="secondary">Clear</button>
+    </div>
+
+    <p id="status" class="status"></p>
+
+    <section class="recorded-steps">
+      <div class="section-header">
+        <h2>Recent picks</h2>
+        <span id="step-count" class="badge">0</span>
+      </div>
+      <ol id="steps-list"></ol>
+    </section>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
