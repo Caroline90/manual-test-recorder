@@ -226,9 +226,34 @@ input {
 
 .steps-list span,
 .steps-list p,
-.steps-list small {
+.steps-list small,
+.step-screenshot {
     display: block;
     margin-top: 6px;
+}
+
+.step-screenshot {
+    margin-top: 12px;
+}
+
+.screenshot-link {
+    display: inline-flex;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #d8e2fb;
+    background: #fff;
+    max-width: min(100%, 280px);
+}
+
+.screenshot-link img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.screenshot-empty {
+    color: #6f7f99;
+    font-style: normal;
 }
 
 .steps-list p,

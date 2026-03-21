@@ -7,14 +7,17 @@ public class TestStep {
     private final String detail;
     private final String data;
     private final String expectedResult;
+    private final String screenshot;
 
-    public TestStep(int index, String action, String target, String detail, String data, String expectedResult) {
+    public TestStep(int index, String action, String target, String detail, String data, String expectedResult,
+                    String screenshot) {
         this.index = index;
         this.action = action;
         this.target = target;
         this.detail = detail;
         this.data = data;
         this.expectedResult = expectedResult;
+        this.screenshot = screenshot;
     }
 
     public int getIndex() {
@@ -39,5 +42,9 @@ public class TestStep {
 
     public String getExpectedResult() {
         return expectedResult;
+    }
+
+    public String getScreenshot() {
+        return screenshot;
     }
 }

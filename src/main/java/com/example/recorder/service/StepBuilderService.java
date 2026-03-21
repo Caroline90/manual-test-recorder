@@ -26,7 +26,8 @@ public class StepBuilderService {
                 targetFor(event),
                 detailFor(type, event),
                 dataFor(type, event),
-                expectedResultFor(type, event)
+                expectedResultFor(type, event),
+                event.getScreenshot()
         );
     }
 

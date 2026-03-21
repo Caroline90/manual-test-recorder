@@ -139,3 +139,18 @@ li span {
   font-size: 12px;
   margin-top: 4px;
 }
+
+li img {
+  display: block;
+  margin-top: 8px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #d8e2fb;
+}
+
+li em {
+  display: block;
+  margin-top: 8px;
+  color: #5c6b8a;
+  font-style: normal;
+}

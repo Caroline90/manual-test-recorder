@@ -10,6 +10,8 @@ import java.util.List;
 
 public class ManualTestRecorderTestHarness {
 
+    private static final String SCREENSHOT_DATA_URL = "data:image/png;base64,ZmFrZQ==";
+
     public static void main(String[] args) {
         EventStoreService eventStoreService = new EventStoreService();
         StepBuilderService stepBuilderService = new StepBuilderService();
@@ -19,11 +21,11 @@ public class ManualTestRecorderTestHarness {
 
         eventStoreService.append(new RecordedEvent(
                 "click", "Login", null, null, null,
-                "http://localhost:8080", "button", "Manual Test Recorder", null
+                "http://localhost:8080", "button", "Manual Test Recorder", SCREENSHOT_DATA_URL, null
         ));
         eventStoreService.append(new RecordedEvent(
                 "input", "Notes", "Typed from textarea", null, "notes",
-                "http://localhost:8080", "[name='notes']", "Manual Test Recorder", null
+                "http://localhost:8080", "[name='notes']", "Manual Test Recorder", SCREENSHOT_DATA_URL, null
         ));
 
         List<TestStep> steps = stepBuilderService.buildSteps(eventStoreService.getAll());
@@ -31,6 +33,8 @@ public class ManualTestRecorderTestHarness {
         require(csvExportService.exportTestCase(xrayDocumentationService.buildDocument()).contains("Typed from textarea"),
                 "expected CSV export to include entered value");
         require(steps.get(1).getTarget().contains("notes"), "expected selector-based target for textarea input");
+        require(SCREENSHOT_DATA_URL.equals(steps.get(0).getScreenshot()),
+                "expected screenshots to be preserved on each generated step");
         require(xrayDocumentationService.buildDocument().getSummary().contains("Manual Test Recorder"),
                 "expected XRAY summary to include page title");
 
