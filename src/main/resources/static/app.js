@@ -6,12 +6,26 @@ const clearButton = document.getElementById('clear-recording');
 const recordingStatus = document.getElementById('recording-status');
 const recordingStatusTitle = document.getElementById('recording-status-title');
 const recordingStatusDetail = document.getElementById('recording-status-detail');
+const xrayTicketInput = document.getElementById('xray-ticket');
+const exportCsvLink = document.getElementById('export-csv');
+const exportEvidenceLink = document.getElementById('export-evidence');
 
 function selectorFor(element) {
+    if (element.id) {
+        return `#${element.id}`;
+    }
     if (element.name) {
         return `[name='${element.name}']`;
     }
     return element.tagName.toLowerCase();
+}
+
+function normalizeTicket(rawValue) {
+    return (rawValue || '').trim().toUpperCase();
+}
+
+function currentTicket() {
+    return normalizeTicket(xrayTicketInput?.value);
 }
 
 async function sendEvent(payload) {
@@ -24,19 +38,36 @@ async function sendEvent(payload) {
 }
 
 function labelFor(element) {
-    return element.innerText?.trim() || element.value?.trim() || element.placeholder || element.name || element.tagName.toLowerCase();
+    const fieldLabel = element.closest('label')?.childNodes?.[0]?.textContent?.trim();
+    return fieldLabel || element.innerText?.trim() || element.value?.trim() || element.placeholder || element.name || element.tagName.toLowerCase();
+}
+
+function eventTypeFor(element) {
+    if (element.dataset.record) {
+        return element.dataset.record;
+    }
+    const tagName = element.tagName.toLowerCase();
+    if (tagName === 'textarea' || tagName === 'select') {
+        return 'input';
+    }
+    if (tagName === 'input') {
+        const type = (element.getAttribute('type') || 'text').toLowerCase();
+        return ['checkbox', 'radio', 'range'].includes(type) ? 'change' : 'input';
+    }
+    return 'click';
 }
 
 function buildPayload(element, type) {
     return {
         type,
         text: labelFor(element),
-        value: element.value || null,
+        value: Object.prototype.hasOwnProperty.call(element, 'value') ? element.value || null : null,
         id: null,
         name: element.name || null,
         url: window.location.href,
         selector: selectorFor(element),
         pageTitle: document.title,
+        xrayTicket: currentTicket() || null,
         screenshot: null
     };
 }
@@ -94,6 +125,12 @@ function applySelectionHighlights(steps) {
     });
 }
 
+function updateExportLinks() {
+    const ticket = currentTicket();
+    exportCsvLink.dataset.ticket = ticket;
+    exportEvidenceLink.dataset.ticket = ticket;
+}
+
 async function refreshView() {
     const [stepsResponse, xrayResponse] = await Promise.all([
         fetch('/api/steps'),
@@ -102,6 +139,9 @@ async function refreshView() {
 
     const steps = await stepsResponse.json();
     const xray = await xrayResponse.json();
+    if (xrayTicketInput && !currentTicket() && xray.xrayTicket) {
+        xrayTicketInput.value = xray.xrayTicket;
+    }
 
     stepCount.textContent = `${steps.length} step${steps.length === 1 ? '' : 's'}`;
     stepsList.innerHTML = steps.map((step) => `
@@ -118,6 +158,7 @@ async function refreshView() {
         <div><span>Summary</span><strong>${xray.summary}</strong></div>
         <div><span>Objective</span><strong>${xray.objective}</strong></div>
         <div><span>Precondition</span><strong>${xray.precondition}</strong></div>
+        <div><span>XRAY ticket</span><strong>${xray.xrayTicket || 'Not set'}</strong></div>
     `;
 
     xrayTableBody.innerHTML = xray.steps.map((step) => `
@@ -133,25 +174,37 @@ async function refreshView() {
 
     setRecordingState(steps);
     applySelectionHighlights(steps);
+    updateExportLinks();
+}
+
+function bindRecorder(element) {
+    const eventType = eventTypeFor(element);
+    const handlerType = eventType === 'click' || eventType === 'assert' ? 'click' : 'change';
+    element.addEventListener(handlerType, async (event) => {
+        if (eventType === 'click' && element.tagName.toLowerCase() === 'a') {
+            event.preventDefault();
+        }
+        await sendEvent(buildPayload(element, eventType));
+    });
 }
 
 function attachRecorder() {
-    document.querySelectorAll('[data-record]').forEach((element) => {
-        const eventType = element.dataset.record;
-        const handlerType = eventType === 'input' ? 'change' : 'click';
-        element.addEventListener(handlerType, async (event) => {
-            if (eventType === 'click' && element.tagName.toLowerCase() === 'a') {
-                event.preventDefault();
-            }
-            await sendEvent(buildPayload(element, eventType));
-        });
-    });
+    const selectors = [
+        '.sample-panel input:not([data-skip-recording])',
+        '.sample-panel textarea:not([data-skip-recording])',
+        '.sample-panel select:not([data-skip-recording])',
+        '.sample-panel [data-record]'
+    ];
+    const uniqueElements = new Set(document.querySelectorAll(selectors.join(',')));
+    uniqueElements.forEach((element) => bindRecorder(element));
 }
 
 clearButton.addEventListener('click', async () => {
     await fetch('/api/events', { method: 'DELETE' });
     await refreshView();
 });
+
+xrayTicketInput?.addEventListener('change', updateExportLinks);
 
 attachRecorder();
 refreshView();

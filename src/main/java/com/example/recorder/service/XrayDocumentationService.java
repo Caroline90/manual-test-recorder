@@ -20,6 +20,12 @@ public class XrayDocumentationService {
     public XrayTestCase buildDocument() {
         List<RecordedEvent> events = eventStoreService.getAll();
         List<TestStep> steps = stepBuilderService.buildSteps(events);
+        String xrayTicket = events.stream()
+                .map(RecordedEvent::getXrayTicket)
+                .filter(ticket -> ticket != null && !ticket.isBlank())
+                .findFirst()
+                .orElse("");
+
         String pageName = events.stream()
                 .map(RecordedEvent::getPageTitle)
                 .filter(title -> title != null && !title.isBlank())
@@ -27,12 +33,13 @@ public class XrayDocumentationService {
                 .orElse("recorded workflow");
 
         return new XrayTestCase(
-                "Test 1 for user story " + pageName,
+                xrayTicket.isBlank() ? "Test 1 for user story " + pageName : "Test 1 for XRAY ticket " + xrayTicket,
                 "High",
                 "",
                 "",
                 "Capture a manual workflow and convert it into reusable XRAY-style test steps.",
                 "Open the sample recorder page and start capturing interactions.",
+                xrayTicket,
                 steps
         );
     }

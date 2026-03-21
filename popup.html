@@ -15,8 +15,15 @@
     </section>
 
     <label class="field">
-      Backend endpoint
-      <input id="backend-url" type="url" placeholder="http://localhost:8080/api/events">
+      Backend endpoint or port
+      <input id="backend-url" type="text" placeholder="8090 or http://localhost:8090/api/events">
+      <small>Defaults to port 8090 and auto-completes to <code>/api/events</code>.</small>
+    </label>
+
+    <label class="field">
+      XRAY ticket
+      <input id="xray-ticket" type="text" placeholder="XRAY-123">
+      <small>Used in exported screenshot file names so each bundle stays traceable.</small>
     </label>
 
     <div class="actions">

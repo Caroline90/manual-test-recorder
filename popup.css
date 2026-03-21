@@ -56,6 +56,13 @@ body {
   font-size: 13px;
 }
 
+.field small {
+  color: #6b7890;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .actions {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -130,11 +137,13 @@ li {
 }
 
 li strong,
-li span {
+li span,
+li small {
   display: block;
 }
 
-li span {
+li span,
+li small {
   color: #6b7890;
   font-size: 12px;
   margin-top: 4px;

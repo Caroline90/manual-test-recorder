@@ -12,7 +12,7 @@
         <div>
             <p class="eyebrow">Spring Boot + Gradle</p>
             <h1>Manual Test Recorder for XRAY documentation</h1>
-            <p class="hero-copy">Click or type in the sample UI, generate XRAY-style manual test steps, and export the captured steps to CSV.</p>
+            <p class="hero-copy">Click or type in the sample UI, generate XRAY-style manual test steps, and export the captured steps to CSV. The app now runs on port <code>8090</code> by default, supports a configurable extension endpoint, and can tag screenshot exports with an XRAY ticket.</p>
         </div>
         <div class="hero-actions">
             <button id="clear-recording" class="secondary">Clear recording</button>
@@ -40,7 +40,7 @@
             </div>
             <div class="extension-grid">
                 <div>
-                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, and click <strong>Start recording</strong>. The extension records clicks plus committed text entry from inputs and text areas without showing an in-page picker, then sends each action to <code>/api/events</code> for XRAY-ready documentation. Use the <strong>Export XRAY evidence bundle</strong> action when you need the CSV plus extracted screenshot files for Jira/XRAY attachments.</p>
+                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, and click <strong>Start recording</strong>. The extension records clicks plus committed text entry from inputs and text areas without showing any in-page picker, then sends each action to <code>/api/events</code> for XRAY-ready documentation. The popup defaults to <code>http://localhost:8090/api/events</code>, but you can enter a different port or full URL whenever the backend changes. Add an XRAY ticket in the popup so every exported screenshot file stays tied to the right issue.</p>
                     <ol class="extension-steps">
                         <li>Open <strong>chrome://extensions</strong>.</li>
                         <li>Enable <strong>Developer mode</strong>.</li>
@@ -68,7 +68,7 @@
                     <ul class="export-steps">
                         <li><code>xray-steps.csv</code> for a standard XRAY CSV import.</li>
                         <li><code>xray-steps-with-screenshots.csv</code> with an extra <strong>Screenshot</strong> column referencing each exported image file.</li>
-                        <li><code>screenshots/step-01.png</code>, <code>step-02.png</code>, and so on for upload into Jira/XRAY.</li>
+                        <li><code>screenshots/step-01.png</code> by default, or <code>screenshots/xray-123-step-01.png</code> when you set an XRAY ticket before export.</li>
                     </ul>
                 </div>
                 <div class="export-note">
@@ -78,6 +78,28 @@
                         <li>Open the created Jira/XRAY test.</li>
                         <li>Upload the matching files from the bundle's <code>screenshots</code> folder.</li>
                         <li>Reference the file names from the Screenshot column in your step documentation or evidence.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel settings-panel">
+            <div class="panel-header">
+                <h2>Export settings</h2>
+                <span class="badge">Ticket aware</span>
+            </div>
+            <div class="settings-grid">
+                <label>
+                    XRAY ticket number
+                    <input id="xray-ticket" type="text" placeholder="XRAY-123" data-skip-recording="true">
+                    <small>This value is attached to every new recorded event and prefixes exported screenshot filenames.</small>
+                </label>
+                <div class="export-note compact">
+                    <strong>What changes with the ticket?</strong>
+                    <ol>
+                        <li>CSV and ZIP exports keep the same flow.</li>
+                        <li>Screenshot references become names like <code>screenshots/xray-123-step-01.png</code>.</li>
+                        <li>This makes multiple downloads easy to map back to the Jira/XRAY issue.</li>
                     </ol>
                 </div>
             </div>
@@ -93,18 +115,38 @@
                 <article class="card">
                     <h3>Login</h3>
                     <label>
+                        First name
+                        <input id="first-name" name="firstName" type="text" placeholder="Pat">
+                    </label>
+                    <label>
+                        Last name
+                        <input id="last-name" name="lastName" type="text" placeholder="Tester">
+                    </label>
+                    <label>
                         Email
-                        <input id="email" name="email" data-record="input" type="email" placeholder="qa@example.com">
+                        <input id="email" name="email" type="email" placeholder="qa@example.com">
                     </label>
                     <label>
                         Password
-                        <input id="password" name="password" data-record="input" type="password" placeholder="••••••••">
+                        <input id="password" name="password" type="password" placeholder="••••••••">
+                    </label>
+                    <button id="login-button" data-record="click">Login</button>
+                </article>
+
+                <article class="card">
+                    <h3>Execution details</h3>
+                    <label>
+                        Environment
+                        <input id="environment" name="environment" type="text" placeholder="QA / Staging">
                     </label>
                     <label>
                         Notes
-                        <textarea name="notes" data-record="input" rows="4" placeholder="Add execution notes for the test run"></textarea>
+                        <textarea id="notes" name="notes" rows="4" placeholder="Add execution notes for the test run"></textarea>
                     </label>
-                    <button id="login-button" data-record="click">Login</button>
+                    <label>
+                        Expected outcome
+                        <textarea id="expected-outcome" name="expectedOutcome" rows="3" placeholder="Describe the outcome you expect to validate"></textarea>
+                    </label>
                 </article>
 
                 <article class="card">
