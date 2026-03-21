@@ -3,6 +3,9 @@ const xrayTableBody = document.getElementById('xray-table-body');
 const xrayMetadata = document.getElementById('xray-metadata');
 const stepCount = document.getElementById('step-count');
 const clearButton = document.getElementById('clear-recording');
+const recordingStatus = document.getElementById('recording-status');
+const recordingStatusTitle = document.getElementById('recording-status-title');
+const recordingStatusDetail = document.getElementById('recording-status-detail');
 
 function selectorFor(element) {
     if (element.id) {
@@ -40,6 +43,47 @@ function buildPayload(element, type) {
     };
 }
 
+function setRecordingState(steps) {
+    const lastStep = steps.at(-1);
+    const isRecording = steps.length > 0;
+
+    recordingStatus.dataset.state = isRecording ? 'active' : 'idle';
+    recordingStatusTitle.textContent = isRecording ? 'Recording started' : 'Recorder idle';
+    recordingStatusDetail.textContent = isRecording
+        ? `Last captured target: ${lastStep.target}`
+        : 'Recording starts automatically when you interact with a tracked element.';
+}
+
+function clearSelectionHighlights() {
+    document.querySelectorAll('.recorded-selection, .latest-selection').forEach((element) => {
+        element.classList.remove('recorded-selection', 'latest-selection');
+    });
+}
+
+function highlightElement(element, isLatest) {
+    element.classList.add('recorded-selection');
+    if (isLatest) {
+        element.classList.add('latest-selection');
+    }
+}
+
+function applySelectionHighlights(steps) {
+    clearSelectionHighlights();
+
+    steps.forEach((step, index) => {
+        if (!step.target) {
+            return;
+        }
+
+        try {
+            const matchedElements = document.querySelectorAll(step.target);
+            matchedElements.forEach((element) => highlightElement(element, index === steps.length - 1));
+        } catch (error) {
+            // Ignore selectors that are not valid for querySelectorAll.
+        }
+    });
+}
+
 async function refreshView() {
     const [stepsResponse, xrayResponse] = await Promise.all([
         fetch('/api/steps'),
@@ -74,6 +118,9 @@ async function refreshView() {
             <td>${step.expectedResult}</td>
         </tr>
     `).join('');
+
+    setRecordingState(steps);
+    applySelectionHighlights(steps);
 }
 
 function attachRecorder() {
