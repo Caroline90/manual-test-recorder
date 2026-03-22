@@ -35,24 +35,30 @@
     <main class="layout">
         <section class="panel extension-panel">
             <div class="panel-header">
-                <h2>Chrome extension recorder</h2>
-                <span class="badge">New</span>
+                <h2>Browser recorder options</h2>
+                <span class="badge">Extension + fallback</span>
             </div>
             <div class="extension-grid">
                 <div>
-                    <p class="extension-copy">Load the unpacked extension from this repository, open the popup, and click <strong>Start recording</strong>. The extension records clicks, committed text entry from inputs and text areas, and grouped snapshots for sections marked with <code>data-record-group</code> so multi-field request bodies can be documented together. Each action is sent to <code>/api/events</code> for XRAY-ready documentation. The popup defaults to <code>http://localhost:8090/api/events</code>, but you can enter a different port or full URL whenever the backend changes. Add an XRAY ticket in the popup so every exported screenshot file stays tied to the right issue.</p>
+                    <p class="extension-copy">Use the unpacked Chrome/Edge extension when the browser allows local installs, or switch to the new no-install fallback when enterprise policy blocks extension loading. Both flows keep the same recorder behavior: they capture clicks, committed text entry from inputs and text areas, grouped snapshots for sections marked with <code>data-record-group</code>, and send each action to <code>/api/events</code> for XRAY-ready documentation. The extension popup and the fallback panel both accept a backend URL plus an XRAY ticket so exports stay tied to the correct issue.</p>
                     <ol class="extension-steps">
-                        <li>Open <strong>chrome://extensions</strong>.</li>
-                        <li>Enable <strong>Developer mode</strong>.</li>
-                        <li>Choose <strong>Load unpacked</strong> and select this repository folder.</li>
-                        <li>Use the popup to start recording actions from the current tab.</li>
+                        <li><strong>Preferred:</strong> open <strong>chrome://extensions</strong> or <strong>edge://extensions</strong>, enable <strong>Developer mode</strong>, and choose <strong>Load unpacked</strong>.</li>
+                        <li><strong>Fallback:</strong> drag the bookmarklet below to your bookmarks bar, open the target page, and click it to launch the same recorder UI without installing anything.</li>
+                        <li>When prompted, allow current-tab sharing so the fallback can capture screenshots too.</li>
+                        <li>Use either recorder to start and stop actions from the current page.</li>
                     </ol>
+                    <div class="bookmarklet-tools">
+                        <a id="bookmarklet-link" class="primary bookmarklet-link" href="#">Install fallback bookmarklet</a>
+                        <button id="copy-bookmarklet" class="secondary" type="button">Copy launcher snippet</button>
+                    </div>
+                    <p id="bookmarklet-status" class="bookmarklet-status">The bookmarklet link is generated from this backend so it can inject the fallback recorder on any page.</p>
                 </div>
                 <div class="extension-files">
-                    <span>Extension files included</span>
+                    <span>Recorder assets included</span>
                     <strong>manifest.json</strong>
                     <strong>popup.html / popup.js / popup.css</strong>
                     <strong>background.js / content.js</strong>
+                    <strong>bookmarklet-recorder.js</strong>
                 </div>
             </div>
         </section>

@@ -68,7 +68,7 @@ In-memory event store
 Before running the service, make sure you have:
 
 - Java 17 installed.
-- A Chromium-based browser if you want to use the extension.
+- A Chromium-based browser if you want to use the extension or the fallback bookmarklet recorder.
 - No other process already bound to port `8090`, unless you plan to change the backend endpoint in the extension popup.
 
 ## Getting started
@@ -137,13 +137,26 @@ The repository already contains the unpacked extension files:
 - `background.js`
 - `content.js`
 
-### Install it in Chrome
+### Install it in Chrome or Edge
 
-1. Open `chrome://extensions`.
+1. Open `chrome://extensions` or `edge://extensions`.
 2. Enable **Developer mode**.
 3. Click **Load unpacked**.
 4. Select this repository directory.
 5. Pin the extension if desired for easier access.
+
+### No-install fallback for locked-down browsers
+
+If Chrome or Edge policy blocks unpacked extensions, use the fallback bookmarklet instead:
+
+1. Start the backend and open <http://localhost:8090/>.
+2. In the **Browser recorder options** panel, drag **Install fallback bookmarklet** to your bookmarks bar.
+3. Open the target page you want to document.
+4. Click the bookmarklet to inject the fallback recorder panel into that page.
+5. Click **Start recording** in the fallback panel and, when prompted, share the current tab so screenshots can still be captured.
+6. Record, stop, clear, and export with the same backend endpoints used by the extension.
+
+If your browser blocks drag-and-drop bookmarks, use the **Copy launcher snippet** button and paste the copied value into a manually created bookmark URL field.
 
 ## Using the extension
 
@@ -162,12 +175,12 @@ The popup supports two inputs:
 
 1. Start the backend.
 2. Open the target page you want to document.
-3. Open the extension popup.
+3. Open the extension popup, or launch the fallback bookmarklet if extensions are blocked.
 4. Confirm the backend endpoint.
 5. Optionally enter an XRAY ticket.
 6. Click **Start recording**.
 7. Interact with the current tab.
-8. Stop recording from the popup when finished.
+8. Stop recording from the popup or fallback panel when finished.
 9. Use the backend UI or API exports to retrieve generated documentation.
 
 ### What the extension records
@@ -191,7 +204,7 @@ Depending on the element type, the extension records:
 
 ### Screenshots
 
-For each step received from the content script, the background script tries to capture the visible tab as a PNG data URL. Those screenshots are:
+For each step received from the content script, the background script tries to capture the visible tab as a PNG data URL. The fallback bookmarklet uses tab-sharing plus an off-screen video frame when browser policy blocks extension installation. Those screenshots are:
 
 - Stored with the recorded step in extension state.
 - Forwarded to the backend as part of the event payload.

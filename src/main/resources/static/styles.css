@@ -421,3 +421,23 @@ code {
         grid-template-columns: 1fr;
     }
 }
+
+
+.bookmarklet-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.bookmarklet-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bookmarklet-status {
+    margin: 0.85rem 0 0;
+    font-size: 0.95rem;
+    color: #475569;
+}
