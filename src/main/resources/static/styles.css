@@ -251,6 +251,24 @@ select {
     border-radius: 16px;
 }
 
+.step-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.step-delete {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.step-delete:hover {
+    background: #fecaca;
+}
+
 .steps-list span,
 .steps-list p,
 .steps-list small,

@@ -99,6 +99,14 @@ public class ApiDocumentationController {
                         noContentResponse("Recorded events cleared.")
                 )
         ));
+        paths.put("/api/events/{index}", mapOf(
+                "delete", operation(
+                        "deleteEvent",
+                        "Delete one recorded event by zero-based index",
+                        List.of(pathParameter("index", "Zero-based event index to remove.", integerSchema("int32"))),
+                        jsonResponse("Removed event", ref("RecordedEvent"))
+                )
+        ));
         paths.put("/api/steps", mapOf(
                 "get", operation(
                         "listSteps",
@@ -247,6 +255,23 @@ public class ApiDocumentationController {
                 "type", "string",
                 "nullable", true,
                 "description", description
+        );
+    }
+
+    private Map<String, Object> integerSchema(String format) {
+        return mapOf(
+                "type", "integer",
+                "format", format
+        );
+    }
+
+    private Map<String, Object> pathParameter(String name, String description, Map<String, Object> schema) {
+        return mapOf(
+                "name", name,
+                "in", "path",
+                "required", true,
+                "description", description,
+                "schema", schema
         );
     }
 

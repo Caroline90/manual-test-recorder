@@ -203,6 +203,14 @@ function updateExportLinks() {
     exportEvidenceLink.dataset.ticket = ticket;
 }
 
+async function deleteStep(index) {
+    const response = await fetch(`/api/events/${index}`, { method: 'DELETE' });
+    if (!response.ok) {
+        throw new Error(`Could not delete step ${index + 1}.`);
+    }
+    await refreshView();
+}
+
 async function refreshView() {
     const [stepsResponse, xrayResponse] = await Promise.all([
         fetch('/api/steps'),
@@ -216,9 +224,12 @@ async function refreshView() {
     }
 
     stepCount.textContent = `${steps.length} step${steps.length === 1 ? '' : 's'}`;
-    stepsList.innerHTML = steps.map((step) => `
+    stepsList.innerHTML = steps.map((step, index) => `
         <li>
-            <strong>${step.action}</strong>
+            <div class="step-row">
+                <strong>${step.action}</strong>
+                <button class="step-delete" type="button" data-step-index="${index}" aria-label="Delete recorded step ${index + 1}">Delete</button>
+            </div>
             <span>${step.target}</span>
             <p>${step.detail}</p>
             <small>${step.expectedResult}</small>
@@ -282,6 +293,24 @@ function attachRecorder() {
 clearButton.addEventListener('click', async () => {
     await fetch('/api/events', { method: 'DELETE' });
     await refreshView();
+});
+
+stepsList.addEventListener('click', async (event) => {
+    const deleteButton = event.target.closest('.step-delete');
+    if (!deleteButton) {
+        return;
+    }
+
+    const stepIndex = Number.parseInt(deleteButton.dataset.stepIndex || '', 10);
+    if (Number.isNaN(stepIndex)) {
+        return;
+    }
+
+    try {
+        await deleteStep(stepIndex);
+    } catch (error) {
+        window.alert(error.message);
+    }
 });
 
 xrayTicketInput?.addEventListener('change', updateExportLinks);
