@@ -23,10 +23,12 @@ function render(state, tabId) {
       : 'Ready to capture clicks, text entry, and grouped request-body snapshots.');
 
   stepCount.textContent = `${state.steps.length}`;
-  stepsList.innerHTML = state.steps.map((step) => `
+  const visibleSteps = state.steps.slice().reverse();
+  stepsList.innerHTML = visibleSteps.map((step) => `
     <li>
       <strong>${step.type || 'action'} · ${step.text || step.selector}</strong>
       <span>${step.selector}</span>
+      <small>${step.value ? `Data: ${step.value}` : 'No input data captured'}</small>
       <small>${step.xrayTicket ? `XRAY: ${step.xrayTicket}` : 'XRAY ticket not set'}</small>
       ${step.screenshot ? `<img src="${step.screenshot}" alt="Screenshot for ${step.text || step.selector}">` : '<em>No screenshot captured.</em>'}
     </li>
