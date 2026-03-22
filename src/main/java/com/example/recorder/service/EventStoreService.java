@@ -24,6 +24,13 @@ public class EventStoreService {
         return List.copyOf(recordedEvents);
     }
 
+    public synchronized RecordedEvent removeAt(int index) {
+        if (index < 0 || index >= recordedEvents.size()) {
+            throw new IllegalArgumentException("event index is out of range");
+        }
+        return recordedEvents.remove(index);
+    }
+
     public synchronized void clear() {
         recordedEvents.clear();
     }

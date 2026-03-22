@@ -21,6 +21,11 @@
         xrayTicket: '',
         steps: [],
         panelVisible: true,
+        panelPosition: {
+            top: 16,
+            left: null,
+            right: 16
+        },
         screenshotStatus: 'idle',
         screenshotError: '',
         stream: null,
@@ -45,7 +50,7 @@
   position: fixed;
   top: 16px;
   right: 16px;
-  width: 360px;
+  width: min(360px, calc(100vw - 24px));
   max-height: calc(100vh - 32px);
   overflow: auto;
   z-index: 2147483647;
@@ -64,6 +69,9 @@
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
 }
 #manual-test-recorder-fallback-panel h1 {
   margin: 0;
@@ -87,6 +95,14 @@
   line-height: 1;
   cursor: pointer;
   color: #475569;
+}
+#manual-test-recorder-fallback-panel .mtr-drag-hint {
+  display: inline-flex;
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
 }
 #manual-test-recorder-fallback-panel .mtr-body {
   padding: 0 18px 18px;
@@ -165,6 +181,26 @@
 }
 #manual-test-recorder-fallback-panel .mtr-steps li {
   color: #334155;
+  list-style: decimal;
+}
+#manual-test-recorder-fallback-panel .mtr-step-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+#manual-test-recorder-fallback-panel .mtr-step-delete {
+  border: 0;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: #fee2e2;
+  color: #b91c1c;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+#manual-test-recorder-fallback-panel .mtr-step-delete:hover {
+  background: #fecaca;
 }
 #manual-test-recorder-fallback-panel .mtr-steps strong,
 #manual-test-recorder-fallback-panel .mtr-steps span,
@@ -1036,18 +1072,115 @@
         }
     }
 
+    async function deleteRecordedStep(stepIndex) {
+        state.backendUrl = normalizeBackendUrl(elements.backendUrl.value);
+        try {
+            const response = await fetch(`${state.backendUrl}/${stepIndex}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            state.steps.splice(stepIndex, 1);
+            state.steps = state.steps.slice(-10);
+            updateStatus('Removed the selected step.');
+            renderPanel();
+        } catch (error) {
+            updateStatus(`Could not delete the selected step: ${error.message}`, true);
+        }
+    }
+
+    function applyPanelPosition() {
+        if (!root) {
+            return;
+        }
+
+        root.style.top = `${state.panelPosition.top}px`;
+        root.style.left = state.panelPosition.left == null ? 'auto' : `${state.panelPosition.left}px`;
+        root.style.right = state.panelPosition.right == null ? 'auto' : `${state.panelPosition.right}px`;
+    }
+
+    function clampPanelPosition(nextLeft, nextTop) {
+        const margin = 12;
+        const panelWidth = root.offsetWidth || 360;
+        const panelHeight = root.offsetHeight || 0;
+        const maxLeft = Math.max(margin, window.innerWidth - panelWidth - margin);
+        const maxTop = Math.max(margin, window.innerHeight - panelHeight - margin);
+
+        return {
+            left: Math.min(Math.max(nextLeft, margin), maxLeft),
+            top: Math.min(Math.max(nextTop, margin), maxTop)
+        };
+    }
+
+    function bindPanelDragging() {
+        const dragHandle = root.querySelector('.mtr-header');
+        if (!dragHandle) {
+            return;
+        }
+
+        let dragState = null;
+
+        const finishDrag = () => {
+            dragState = null;
+            root.classList.remove('mtr-dragging');
+        };
+
+        dragHandle.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0 || event.target.closest('button, input, textarea, a, label')) {
+                return;
+            }
+
+            const rect = root.getBoundingClientRect();
+            dragState = {
+                offsetX: event.clientX - rect.left,
+                offsetY: event.clientY - rect.top,
+                pointerId: event.pointerId
+            };
+            state.panelPosition.left = rect.left;
+            state.panelPosition.right = null;
+            state.panelPosition.top = rect.top;
+            root.classList.add('mtr-dragging');
+            dragHandle.setPointerCapture?.(event.pointerId);
+            event.preventDefault();
+        });
+
+        dragHandle.addEventListener('pointermove', (event) => {
+            if (!dragState || dragState.pointerId !== event.pointerId) {
+                return;
+            }
+
+            const nextPosition = clampPanelPosition(event.clientX - dragState.offsetX, event.clientY - dragState.offsetY);
+            state.panelPosition.left = nextPosition.left;
+            state.panelPosition.top = nextPosition.top;
+            state.panelPosition.right = null;
+            applyPanelPosition();
+        });
+
+        dragHandle.addEventListener('pointerup', finishDrag);
+        dragHandle.addEventListener('pointercancel', finishDrag);
+    }
+
     function renderSteps() {
         if (!state.steps.length) {
             return '<li>No recorded steps yet.</li>';
         }
 
-        return state.steps.slice().reverse().map((step) => `
-            <li>
-                <strong>${escapeHtml(step.type)} · ${escapeHtml(step.text || step.selector)}</strong>
-                <span>${escapeHtml(step.selector)}</span>
-                <small>${step.xrayTicket ? `XRAY ${escapeHtml(step.xrayTicket)}` : 'XRAY ticket not set'}</small>
-            </li>
-        `).join('');
+        return state.steps.slice().reverse().map((step, reverseIndex) => {
+            const stepIndex = state.steps.length - reverseIndex - 1;
+            return `
+                <li>
+                    <div class="mtr-step-row">
+                        <strong>${escapeHtml(step.type)} · ${escapeHtml(step.text || step.selector)}</strong>
+                        <button class="mtr-step-delete" type="button" data-step-index="${stepIndex}">Delete</button>
+                    </div>
+                    <span>${escapeHtml(step.selector)}</span>
+                    <small>${step.xrayTicket ? `XRAY ${escapeHtml(step.xrayTicket)}` : 'XRAY ticket not set'}</small>
+                </li>
+            `;
+        }).join('');
     }
 
     let root;
@@ -1059,6 +1192,7 @@
         }
 
         root.classList.toggle('hidden', !state.panelVisible);
+        applyPanelPosition();
         if (!elements) {
             return;
         }
@@ -1091,6 +1225,7 @@
             <div class="mtr-header">
                 <div>
                     <h1>Manual Test Recorder fallback</h1>
+                    <span class="mtr-drag-hint">Drag panel</span>
                     <p class="mtr-copy">Use this when Chrome or Edge blocks extension installs. The page keeps the same capture flow and can also request tab screenshots.</p>
                 </div>
                 <button class="mtr-close" type="button" aria-label="Hide recorder">×</button>
@@ -1139,6 +1274,19 @@
         });
 
         elements.clear.addEventListener('click', clearRecording);
+        elements.steps.addEventListener('click', async (event) => {
+            const deleteButton = event.target.closest('.mtr-step-delete');
+            if (!deleteButton) {
+                return;
+            }
+
+            const stepIndex = Number.parseInt(deleteButton.dataset.stepIndex || '', 10);
+            if (Number.isNaN(stepIndex)) {
+                return;
+            }
+
+            await deleteRecordedStep(stepIndex);
+        });
         elements.hide.addEventListener('click', () => {
             state.panelVisible = false;
             renderPanel();
@@ -1156,11 +1304,22 @@
             renderPanel();
         });
 
+        bindPanelDragging();
         renderPanel();
     }
 
     registerDocument(document);
     buildPanel();
+    window.addEventListener('resize', () => {
+        if (state.panelPosition.left == null) {
+            return;
+        }
+
+        const nextPosition = clampPanelPosition(state.panelPosition.left, state.panelPosition.top);
+        state.panelPosition.left = nextPosition.left;
+        state.panelPosition.top = nextPosition.top;
+        applyPanelPosition();
+    });
 
     window.__manualTestRecorderFallback = {
         toggleVisibility() {

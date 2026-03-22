@@ -28,6 +28,60 @@ class EventLifecycleApiTest {
     }
 
     @Test
+    void deletesSingleRecordedEvent() throws Exception {
+        mockMvc.perform(post("/api/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "type": "click",
+                                  "text": "Login",
+                                  "url": "http://localhost:8090/login",
+                                  "selector": "button"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "type": "input",
+                                  "text": "Username",
+                                  "value": "pat",
+                                  "url": "http://localhost:8090/login",
+                                  "selector": "#username"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/api/events/0"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json("""
+                        {
+                          "type": "click",
+                          "text": "Login",
+                          "url": "http://localhost:8090/login",
+                          "selector": "button"
+                        }
+                        """, false));
+
+        mockMvc.perform(get("/api/events"))
+                .andExpect(status().isOk())
+                .andExpect(content().json("""
+                        [
+                          {
+                            "type": "input",
+                            "text": "Username",
+                            "value": "pat",
+                            "url": "http://localhost:8090/login",
+                            "selector": "#username"
+                          }
+                        ]
+                        """, false));
+    }
+
+    @Test
     void deletesRecordedEvents() throws Exception {
         mockMvc.perform(post("/api/events")
                         .contentType(MediaType.APPLICATION_JSON)

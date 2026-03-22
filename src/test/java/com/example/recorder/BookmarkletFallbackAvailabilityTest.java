@@ -23,6 +23,8 @@ class BookmarkletFallbackAvailabilityTest {
         mockMvc.perform(get("/bookmarklet-recorder.js"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Manual Test Recorder fallback")))
+                .andExpect(content().string(containsString("Drag panel")))
+                .andExpect(content().string(containsString("mtr-step-delete")))
                 .andExpect(content().string(containsString("getDisplayMedia")));
     }
 
