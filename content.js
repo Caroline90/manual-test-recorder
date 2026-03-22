@@ -355,6 +355,14 @@ if (!window.__manualTestRecorderUiPickerActive) {
     return target?.parentElement || null;
   }
 
+  function eventPathElements(event) {
+    if (!event?.composedPath) {
+      return [];
+    }
+
+    return event.composedPath().filter((entry) => entry instanceof Element);
+  }
+
   const INTERACTIVE_SELECTOR = [
     'input',
     'select',
@@ -378,33 +386,110 @@ if (!window.__manualTestRecorderUiPickerActive) {
     '[role="spinbutton"]',
     '[role="slider"]',
     '[role="tab"]',
-    '[role="menuitem"]'
+    '[role="menuitem"]',
+    '[role="grid"]',
+    '[role="treegrid"]',
+    '[role="gridcell"]',
+    '[role="cell"]',
+    '[role="columnheader"]',
+    '[role="rowheader"]',
+    '[role="row"]',
+    '[data-record]',
+    '[onclick]',
+    '[tabindex]'
   ].join(',');
 
-  function resolveTargetElement(target) {
+  const TABLE_LIKE_SELECTOR = [
+    'table',
+    'thead',
+    'tbody',
+    'tfoot',
+    'tr',
+    'th',
+    'td',
+    '[role="grid"]',
+    '[role="treegrid"]',
+    '[role="row"]',
+    '[role="gridcell"]',
+    '[role="cell"]',
+    '[role="columnheader"]',
+    '[role="rowheader"]'
+  ].join(',');
+
+  function labelControlFor(target) {
+    if (target?.tagName !== 'LABEL') {
+      return null;
+    }
+
+    const htmlFor = target.getAttribute('for');
+    if (htmlFor) {
+      const control = target.ownerDocument.querySelector(`[id="${CSS.escape(htmlFor)}"]`);
+      if (control) {
+        return control;
+      }
+    }
+
+    return target.control || null;
+  }
+
+  function isFocusableClickTarget(element) {
+    if (!element?.hasAttribute?.('tabindex')) {
+      return false;
+    }
+
+    const tabIndex = Number(element.getAttribute('tabindex'));
+    return Number.isFinite(tabIndex) && tabIndex >= 0;
+  }
+
+  function fallbackClickableTarget(target) {
     if (!target) {
       return null;
     }
 
-    if (target.tagName === 'LABEL') {
-      const htmlFor = target.getAttribute('for');
-      if (htmlFor) {
-        const control = target.ownerDocument.querySelector(`[id="${CSS.escape(htmlFor)}"]`);
-        if (control) {
-          return control;
-        }
+    return target.closest(TABLE_LIKE_SELECTOR)
+      || target.closest('[data-record], [onclick], [tabindex]')
+      || target;
+  }
+
+  function resolveTargetElement(target, event = null) {
+    const candidates = [];
+    if (target) {
+      candidates.push(target);
+    }
+    eventPathElements(event).forEach((element) => {
+      if (!candidates.includes(element)) {
+        candidates.push(element);
       }
-      if (target.control) {
-        return target.control;
+    });
+
+    if (!candidates.length) {
+      return null;
+    }
+
+    for (const candidate of candidates) {
+      const control = labelControlFor(candidate);
+      if (control) {
+        return control;
+      }
+
+      const optionTarget = candidate.closest?.('[role="option"], option');
+      if (optionTarget) {
+        return optionTarget;
+      }
+
+      const interactiveTarget = candidate.closest?.(INTERACTIVE_SELECTOR);
+      if (interactiveTarget) {
+        return interactiveTarget;
       }
     }
 
-    const optionTarget = target.closest('[role="option"], option');
-    if (optionTarget) {
-      return optionTarget;
+    for (const candidate of candidates) {
+      if (isFocusableClickTarget(candidate)) {
+        return candidate;
+      }
     }
 
-    return target.closest(INTERACTIVE_SELECTOR) || target;
+    return fallbackClickableTarget(candidates[0]);
   }
 
   function isTextEntryElement(element) {
@@ -465,7 +550,7 @@ if (!window.__manualTestRecorderUiPickerActive) {
         return;
       }
       const target = toElement(event.target);
-      const resolvedTarget = resolveTargetElement(target);
+      const resolvedTarget = resolveTargetElement(target, event);
       if (!resolvedTarget) {
         return;
       }
@@ -483,7 +568,7 @@ if (!window.__manualTestRecorderUiPickerActive) {
         return;
       }
       const target = toElement(event.target);
-      const resolvedTarget = resolveTargetElement(target);
+      const resolvedTarget = resolveTargetElement(target, event);
       if (!resolvedTarget || !shouldRecordClick(resolvedTarget)) {
         return;
       }
@@ -492,7 +577,7 @@ if (!window.__manualTestRecorderUiPickerActive) {
     };
 
     const onFocusIn = (event) => {
-      const target = resolveTargetElement(toElement(event.target));
+      const target = resolveTargetElement(toElement(event.target), event);
       if (!pickerEnabled || !target || pendingTextEntries.has(target)) {
         return;
       }
@@ -500,7 +585,7 @@ if (!window.__manualTestRecorderUiPickerActive) {
     };
 
     const onInput = (event) => {
-      const target = resolveTargetElement(toElement(event.target));
+      const target = resolveTargetElement(toElement(event.target), event);
       if (!pickerEnabled || !target || !['input', 'change'].includes(resolveActionType(target))) {
         return;
       }
@@ -508,11 +593,11 @@ if (!window.__manualTestRecorderUiPickerActive) {
     };
 
     const onChange = (event) => {
-      handleTextCommit(resolveTargetElement(toElement(event.target)));
+      handleTextCommit(resolveTargetElement(toElement(event.target), event));
     };
 
     const onBlur = (event) => {
-      handleTextCommit(resolveTargetElement(toElement(event.target)));
+      handleTextCommit(resolveTargetElement(toElement(event.target), event));
     };
 
     targetDocument.addEventListener('mouseover', onPointerMove, true);
