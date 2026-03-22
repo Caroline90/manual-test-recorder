@@ -21,6 +21,10 @@ class ManifestJsonValidationTest {
         assertThat(manifest.isObject()).isTrue();
         assertThat(manifest.path("manifest_version").asInt()).isEqualTo(3);
         assertThat(manifest.path("name").asText()).isEqualTo("Manual Test Recorder");
-        assertThat(manifest.path("content_scripts").get(0).path("all_frames").asBoolean()).isTrue();
+        JsonNode contentScript = manifest.path("content_scripts").get(0);
+
+        assertThat(contentScript.path("all_frames").asBoolean()).isTrue();
+        assertThat(contentScript.path("match_about_blank").asBoolean()).isTrue();
+        assertThat(contentScript.path("match_origin_as_fallback").asBoolean()).isTrue();
     }
 }
