@@ -10,6 +10,25 @@ const xrayTicketInput = document.getElementById('xray-ticket');
 const exportCsvLink = document.getElementById('export-csv');
 const exportEvidenceLink = document.getElementById('export-evidence');
 const recordedGroupSnapshots = new WeakMap();
+const bookmarkletLink = document.getElementById('bookmarklet-link');
+const copyBookmarkletButton = document.getElementById('copy-bookmarklet');
+const bookmarkletStatus = document.getElementById('bookmarklet-status');
+
+
+function bookmarkletSnippet() {
+    const loaderUrl = new URL('/bookmarklet-recorder.js', window.location.origin).toString();
+    return `javascript:(()=>{const existing=window.__manualTestRecorderFallback;if(existing&&existing.show){existing.show();return;}const script=document.createElement('script');script.src='${loaderUrl}?t='+Date.now();script.async=true;document.documentElement.appendChild(script);})();`;
+}
+
+function updateBookmarkletTools(message) {
+    const snippet = bookmarkletSnippet();
+    if (bookmarkletLink) {
+        bookmarkletLink.href = snippet;
+    }
+    if (bookmarkletStatus) {
+        bookmarkletStatus.textContent = message || 'Drag the bookmarklet to your bookmarks bar, or copy the launcher snippet and save it as a bookmark manually.';
+    }
+}
 
 function selectorFor(element) {
     if (element.id) {
@@ -266,6 +285,16 @@ clearButton.addEventListener('click', async () => {
 });
 
 xrayTicketInput?.addEventListener('change', updateExportLinks);
+copyBookmarkletButton?.addEventListener('click', async () => {
+    const snippet = bookmarkletSnippet();
+    try {
+        await navigator.clipboard.writeText(snippet);
+        updateBookmarkletTools('Launcher snippet copied. Paste it into a bookmark URL field if dragging is blocked in your browser.');
+    } catch (error) {
+        updateBookmarkletTools('Clipboard access is unavailable here. You can still drag the bookmarklet link to your bookmarks bar.');
+    }
+});
 
 attachRecorder();
+updateBookmarkletTools();
 refreshView();
