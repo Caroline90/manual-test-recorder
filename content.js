@@ -9,6 +9,8 @@ if (!window.__manualTestRecorderUiPickerActive) {
   const hostDocument = document;
   const highlightBoxes = new WeakMap();
   const trackedDocuments = new Set();
+  const observedDocuments = new WeakSet();
+  const trackedFrames = new WeakSet();
   let styleElement = null;
   const pendingTextEntries = new WeakMap();
   const recordedGroupSnapshots = new WeakMap();
@@ -61,6 +63,11 @@ if (!window.__manualTestRecorderUiPickerActive) {
     box = doc.createElement('div');
     box.className = 'mtr-highlight-box';
     box.setAttribute(PICKER_ROOT_ATTRIBUTE, 'highlight');
+    box.style.position = 'fixed';
+    box.style.pointerEvents = 'none';
+    box.style.border = '3px solid var(--mt-accent, #4f9cff)';
+    box.style.background = 'rgba(79, 156, 255, 0.12)';
+    box.style.zIndex = '2147483646';
     (doc.body || doc.documentElement)?.appendChild(box);
     highlightBoxes.set(doc, box);
     return box;
@@ -164,33 +171,107 @@ if (!window.__manualTestRecorderUiPickerActive) {
     return path.join(' > ');
   }
 
-  function frameContextPrefix() {
-    if (window.top === window) {
+  function accessibleFrameElement(doc) {
+    const view = doc?.defaultView;
+    if (!view || view.top === view) {
       return null;
     }
 
-    const parts = [];
-
     try {
-      const frameElement = window.frameElement;
+      const frameElement = view.frameElement;
       if (frameElement instanceof Element) {
-        parts.push(uniqueCss(frameElement, frameElement.ownerDocument));
+        return frameElement;
       }
     } catch (error) {
       // Ignore cross-origin parent access.
     }
 
-    if (window.location.href) {
-      parts.push(`url("${escapeCssValue(window.location.href)}")`);
+    return null;
+  }
+
+  function frameContextPrefix(doc = document) {
+    const parts = [];
+    let currentDocument = doc;
+
+    while (currentDocument) {
+      const frameElement = accessibleFrameElement(currentDocument);
+      if (!frameElement) {
+        break;
+      }
+
+      parts.unshift(uniqueCss(frameElement, frameElement.ownerDocument));
+
+      const frameUrl = currentDocument.defaultView?.location?.href;
+      if (frameUrl) {
+        parts.push(`url("${escapeCssValue(frameUrl)}")`);
+      }
+
+      currentDocument = frameElement.ownerDocument;
     }
 
-    return parts.length ? parts.join(' | ') : 'iframe';
+    return parts.length ? parts.join(' | ') : null;
   }
 
   function selectorFor(element) {
     const elementSelector = uniqueCss(element, element.ownerDocument);
-    const framePrefix = frameContextPrefix();
+    const framePrefix = frameContextPrefix(element.ownerDocument);
     return framePrefix ? `${framePrefix} >>> ${elementSelector}` : elementSelector;
+  }
+
+  function registerChildFrame(frame) {
+    if (!(frame instanceof HTMLIFrameElement || frame instanceof HTMLFrameElement)) {
+      return;
+    }
+
+    const bindFrameDocument = () => {
+      let childDocument = null;
+      try {
+        childDocument = frame.contentDocument;
+      } catch (error) {
+        return;
+      }
+
+      if (childDocument) {
+        registerDocument(childDocument);
+      }
+    };
+
+    if (!trackedFrames.has(frame)) {
+      frame.addEventListener('load', bindFrameDocument, true);
+      trackedFrames.add(frame);
+    }
+
+    bindFrameDocument();
+  }
+
+  function registerNestedFrames(targetDocument) {
+    if (!targetDocument || observedDocuments.has(targetDocument)) {
+      return;
+    }
+
+    observedDocuments.add(targetDocument);
+    targetDocument.querySelectorAll('iframe, frame').forEach((frame) => registerChildFrame(frame));
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof Element)) {
+            return;
+          }
+
+          if (node.matches?.('iframe, frame')) {
+            registerChildFrame(node);
+          }
+
+          node.querySelectorAll?.('iframe, frame').forEach((frame) => registerChildFrame(frame));
+        });
+      });
+    });
+
+    observer.observe(targetDocument.documentElement || targetDocument, {
+      childList: true,
+      subtree: true
+    });
   }
 
   function selectedOptionLabel(element) {
@@ -280,15 +361,16 @@ if (!window.__manualTestRecorderUiPickerActive) {
   }
 
   function buildPayload(element, overrides = {}) {
+    const elementDocument = element.ownerDocument || document;
     return {
       type: overrides.type || resolveActionType(element),
       text: overrides.text || labelFor(element),
       value: Object.prototype.hasOwnProperty.call(overrides, 'value') ? overrides.value : textValueFor(element),
       id: null,
       name: element.getAttribute?.('name') || null,
-      url: window.location.href,
+      url: elementDocument.defaultView?.location?.href || window.location.href,
       selector: selectorFor(element),
-      pageTitle: document.title,
+      pageTitle: elementDocument.title || document.title,
       tagName: element.tagName.toLowerCase()
     };
   }
@@ -608,6 +690,8 @@ if (!window.__manualTestRecorderUiPickerActive) {
     targetDocument.addEventListener('input', onInput, true);
     targetDocument.addEventListener('change', onChange, true);
     targetDocument.addEventListener('blur', onBlur, true);
+
+    registerNestedFrames(targetDocument);
   }
 
   function enablePickerUi() {
