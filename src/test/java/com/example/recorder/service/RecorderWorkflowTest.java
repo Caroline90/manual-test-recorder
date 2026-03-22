@@ -37,16 +37,16 @@ class RecorderWorkflowTest {
         String csvWithScreenshots = csvExportService.exportTestCaseWithScreenshots(xrayTestCase);
 
         assertEquals(4, steps.size());
-        assertEquals("Go to login page", steps.get(0).getAction());
-        assertEquals("Enter username", steps.get(1).getAction());
-        assertEquals("peter", steps.get(1).getData());
+        assertEquals("Click login button", steps.get(0).getAction());
+        assertEquals("Enter password", steps.get(1).getAction());
+        assertEquals("pwrd123", steps.get(1).getData());
         assertEquals(SCREENSHOT_DATA_URL, steps.get(0).getScreenshot());
         assertEquals("WEB-1", xrayTestCase.getXrayTicket());
         assertEquals("Test 1 for XRAY ticket WEB-1", xrayTestCase.getSummary());
         assertTrue(csv.contains("TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result"));
-        assertTrue(csv.contains("\"1\";\"Test 1 for XRAY ticket WEB-1\";\"High\";\"\";\"\";\"Go to login page\";\"\";\"\""));
-        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Enter username\";\"peter\";\"\""));
-        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Click login button\";\"\";\"The action for 'Login' is triggered successfully.\""));
+        assertTrue(csv.contains("\"1\";\"Test 1 for XRAY ticket WEB-1\";\"High\";\"\";\"\";\"Click login button\";\"\";\"The action for 'Login' is triggered successfully.\""));
+        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Enter password\";\"pwrd123\";\"\""));
+        assertTrue(csv.contains("\"1\";\"\";\"\";\"\";\"\";\"Go to login page\";\"\";\"\""));
         assertTrue(csvWithScreenshots.contains("TCID;Test Summary;Test Priority;Component;Component;Action;Data;Result;Screenshot"));
         assertTrue(csvWithScreenshots.contains("screenshots/web-1-step-01.png"));
         assertTrue(csvWithScreenshots.contains("screenshots/web-1-step-04.png"));
@@ -82,7 +82,7 @@ class RecorderWorkflowTest {
         assertNotNull(screenshotsCsv);
         assertNotNull(readme);
         assertNotNull(screenshotBytes);
-        assertTrue(stepsCsv.contains("Go to login page"));
+        assertTrue(stepsCsv.contains("Click login button"));
         assertTrue(screenshotsCsv.contains("screenshots/web-1-step-01.png"));
         assertTrue(readme.contains("Ticket: WEB-1"));
         assertEquals("fake", new String(screenshotBytes, StandardCharsets.UTF_8));

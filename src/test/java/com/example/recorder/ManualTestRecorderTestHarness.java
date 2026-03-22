@@ -32,7 +32,8 @@ public class ManualTestRecorderTestHarness {
         require(steps.size() == 2, "expected 2 steps");
         require(csvExportService.exportTestCase(xrayDocumentationService.buildDocument()).contains("Typed from textarea"),
                 "expected CSV export to include entered value");
-        require(steps.get(1).getTarget().contains("notes"), "expected selector-based target for textarea input");
+        require("Enter notes".equals(steps.get(0).getAction()), "expected latest recorded input to become the first generated step");
+        require(steps.get(0).getTarget().contains("notes"), "expected selector-based target for textarea input");
         require(SCREENSHOT_DATA_URL.equals(steps.get(0).getScreenshot()),
                 "expected screenshots to be preserved on each generated step");
         require(xrayDocumentationService.buildDocument().getSummary().contains("XRAY-42"),
