@@ -12,8 +12,8 @@ public class StepBuilderService {
 
     public List<TestStep> buildSteps(List<RecordedEvent> events) {
         List<TestStep> steps = new ArrayList<>();
-        for (int i = 0; i < events.size(); i++) {
-            steps.add(toStep(i + 1, events.get(i)));
+        for (int i = events.size() - 1, index = 1; i >= 0; i--, index++) {
+            steps.add(toStep(index, events.get(i)));
         }
         return List.copyOf(steps);
     }
@@ -70,7 +70,7 @@ public class StepBuilderService {
     }
 
     private String detailFor(String type, RecordedEvent event) {
-        return switch (type) {
+        String detail = switch (type) {
             case "click" -> hasText(event.getText())
                     ? "Activate " + describeElement(event) + "."
                     : "Click the target element.";
@@ -87,6 +87,7 @@ public class StepBuilderService {
                     ? event.getText()
                     : "Record the observed interaction.";
         };
+        return appendIframeContext(detail, event);
     }
 
     private String dataFor(String type, RecordedEvent event) {
@@ -146,6 +147,18 @@ public class StepBuilderService {
             return event.getName() + " field";
         }
         return "the field";
+    }
+
+    private String appendIframeContext(String detail, RecordedEvent event) {
+        if (!hasText(event.getSelector()) || !event.getSelector().contains(">>>")) {
+            return detail;
+        }
+
+        String frameContext = event.getSelector().split(">>>", 2)[0].trim();
+        if (!hasText(frameContext)) {
+            return detail;
+        }
+        return detail + " In iframe context " + frameContext + ".";
     }
 
     private String lowerCaseFirst(String value) {

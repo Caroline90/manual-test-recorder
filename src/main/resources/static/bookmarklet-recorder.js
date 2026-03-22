@@ -522,11 +522,23 @@
         return '';
     }
 
-    function labelFor(element) {
-        const ariaLabel = element.getAttribute?.('aria-label');
-        const ariaLabelledBy = element.getAttribute?.('aria-labelledby');
-        if (ariaLabelledBy) {
-            const labelText = ariaLabelledBy
+    function associatedLabelText(element) {
+        if (!element?.ownerDocument) {
+            return '';
+        }
+
+        if (typeof element.labels?.length === 'number' && element.labels.length) {
+            const visibleLabel = Array.from(element.labels)
+                .map((label) => label.innerText?.trim())
+                .find(Boolean);
+            if (visibleLabel) {
+                return visibleLabel;
+            }
+        }
+
+        const labelledBy = element.getAttribute?.('aria-labelledby');
+        if (labelledBy) {
+            const labelText = labelledBy
                 .split(/\s+/)
                 .map((id) => element.ownerDocument.getElementById(id)?.innerText?.trim())
                 .filter(Boolean)
@@ -536,11 +548,33 @@
             }
         }
 
+        const parentLabel = element.closest?.('label');
+        return parentLabel?.innerText?.trim() || '';
+    }
+
+    function labelFor(element) {
+        const ariaLabel = element.getAttribute?.('aria-label');
+        const associatedLabel = associatedLabelText(element);
         const text = element.innerText?.trim();
         const selectedLabel = selectedOptionLabel(element);
         const value = typeof element.value === 'string' ? element.value.trim() : '';
         const placeholder = element.getAttribute?.('placeholder');
-        return ariaLabel || text || selectedLabel || value || placeholder || element.getAttribute?.('name') || roleFor(element) || element.tagName.toLowerCase();
+        const title = element.getAttribute?.('title');
+        const alt = element.getAttribute?.('alt');
+        const name = element.getAttribute?.('name');
+        const dataTestId = element.getAttribute?.('data-testid');
+        return ariaLabel
+            || associatedLabel
+            || text
+            || selectedLabel
+            || placeholder
+            || title
+            || alt
+            || name
+            || dataTestId
+            || value
+            || roleFor(element)
+            || element.tagName.toLowerCase();
     }
 
     function textValueFor(element) {
