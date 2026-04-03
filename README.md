@@ -15,6 +15,12 @@ Manual Test Recorder is a Spring Boot service plus a Chrome extension for captur
 - Ships a static sample UI to exercise the recorder locally.
 - Includes a bundled OpenAPI-style JSON document and Swagger UI entry point for quick API exploration.
 
+## AI QA Copilot blueprint
+
+If you are planning a broader AI-powered testing platform for QA engineers (manual + automated, frontend + backend, any language), see:
+
+- [`docs/AI_QA_COPILOT_PROJECT.md`](docs/AI_QA_COPILOT_PROJECT.md)
+
 ## Repository contents
 
 This repository contains two runtime pieces:
