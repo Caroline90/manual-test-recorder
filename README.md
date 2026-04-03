@@ -213,6 +213,40 @@ For each step received from the content script, the background script tries to c
 
 If screenshot capture is unavailable for a given action, exports still work; the screenshot field is just omitted for that step.
 
+
+## AI test planning endpoint for QA engineers
+
+This project now includes a lightweight AI-oriented planning API that helps testers quickly create broad coverage strategies for:
+
+- any programming language stack (scripting and compiled)
+- backend, frontend, and API layers
+- manual exploratory testing and automated regression coverage
+
+### Endpoint
+
+`POST /api/ai/test-plan`
+
+Example payload:
+
+```json
+{
+  "projectName": "Unified QA Assistant",
+  "featureDescription": "checkout and payment",
+  "languages": "Java, JavaScript, Python",
+  "testTypes": "manual and automated",
+  "systemType": "frontend, backend, API"
+}
+```
+
+The response includes:
+
+- mission statement for QA scope
+- reusable AI prompt template
+- manual testing focus areas
+- automation focus areas
+- backend and frontend checklists
+- cross-platform quality gates
+
 ## REST API
 
 All primary backend operations are exposed under `/api`.
